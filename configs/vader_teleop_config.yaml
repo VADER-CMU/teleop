@@ -1,15 +1,19 @@
+camera:
+  cutter_serial: '130322272760'
+  gripper_serial: '128422272240'
+  teleop_serial: '819112072363'
 cutter:
   arm_ip: 192.168.1.230
   id: 0
   port: /dev/serial/by-id/usb-FTDI_USB__-__Serial_Converter_FT89I74E-if00-port0
   reset_joints:
-  - -110
-  - -85.2
-  - 13.2
-  - 63.6
-  - 0
-  - 21.1
-  - 210.5
+  - -109.3
+  - -81.7
+  - -6.4
+  - 68
+  - 22.9
+  - 16
+  - 174
   - 0
 gripper:
   arm_ip: 192.168.1.241
@@ -19,13 +23,13 @@ gripper:
   - 4
   port: /dev/serial/by-id/usb-FTDI_USB__-__Serial_Converter_FTA2U12T-if00-port0
   reset_joints:
-  - 100
-  - -85.2
-  - -13.2
-  - 90
-  - 0
-  - 0
-  - 120
+  - 118.7
+  - -88
+  - -6.2
+  - 58.8
+  - -31.7
+  - 30
+  - 99.4
   - 0
 teleop_C:
   gripper_config:
@@ -43,14 +47,14 @@ teleop_C:
   joint_offsets:
   - 2
   - 2
-  - 2
+  - 4
   - 1
   - 1
   - 3
   - -1
   joint_signs:
   - 1
-  - -1
+  - 1
   - 1
   - 1
   - 1
@@ -75,7 +79,7 @@ teleop_G:
   - 3
   - 3
   - 1
-  - -1
+  - 3
   - 0
   - 0
   joint_signs:
@@ -87,7 +91,3 @@ teleop_G:
   - 1
   - 1
   port: /dev/serial/by-id/usb-FTDI_USB__-__Serial_Converter_FT88YYGL-if00-port0
-camera:
-  teleop_serial: "819112072363"
-  gripper_serial: "128422272240"
-  cutter_serial: "130322272760"

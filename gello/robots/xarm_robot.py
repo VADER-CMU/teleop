@@ -133,7 +133,7 @@ class PepperGripper:
         # self.gripper_close[0] += 0.8 * np.pi
         # self.gripper_close[1] += 0.8 * np.pi
         # self.gripper_close[2] += 0.8 * np.pi
-        self.gripper_close = [270 * (np.pi/180), 270 * (np.pi/180), 270 * (np.pi/180)]
+        self.gripper_close = [240 * (np.pi/180), 240 * (np.pi/180), 270 * (np.pi/180)]
 
     def set_gripper_position(self, pos: float, wait: bool = False) -> None:
         if self.port_tool is None:
