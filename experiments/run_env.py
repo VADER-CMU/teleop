@@ -31,7 +31,7 @@ class Args:
     hz: int = 100
     start_joints: Optional[Tuple[float, ...]] = None
 
-    gello_port: Optional[str] = None
+    gello_port: Optional[str] = None #CHANGE TO FIXED PORT
     mock: bool = False
     use_save_interface: bool = False
     data_dir: str = "~/bc_data"
@@ -126,7 +126,7 @@ def main(args):
             if gello_port is None:
                 usb_ports = glob.glob("/dev/serial/by-id/*")
                 print(f"Found {len(usb_ports)} ports")
-                if len(usb_ports) > 0:
+                if len(usb_ports) > 0: #CHANGE TO FIXED PORT
                     gello_port = usb_ports[0]
                     print(f"using port {gello_port}")
                 else:
@@ -221,10 +221,12 @@ def main(args):
     joints = obs["joint_positions"]
     action = agent.act(obs)
     if (action - joints > 0.5).any():
+        print("Action:" , action)
+        print("JOint:", joints)
         print("Action is too big")
 
         # print which joints are too big
-        joint_index = np.where(action - joints > 0.8)
+        joint_index = np.where(action - joints > 0.5)
         for j in joint_index:
             print(
                 f"Joint [{j}], leader: {action[j]}, follower: {joints[j]}, diff: {action[j] - joints[j]}"

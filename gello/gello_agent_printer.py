@@ -1,12 +1,13 @@
-import os
+import time
+import numpy as np
 from dataclasses import dataclass
 from typing import Dict, Optional, Sequence, Tuple
 
-import numpy as np
 
 from gello.agents.agent import Agent
 from gello.robots.dynamixel import DynamixelRobot
 
+# Set your serial port here
 
 @dataclass
 class DynamixelRobotConfig:
@@ -108,26 +109,21 @@ PORT_CONFIG_MAP: Dict[str, DynamixelRobotConfig] = {
 }
 
 
-class GelloAgent(Agent):
-    def __init__(
-        self,
-        port: str,
-        dynamixel_config: Optional[DynamixelRobotConfig] = None,
-        start_joints: Optional[np.ndarray] = None,
-    ):
-        # Ensure start_joints is a numpy array if provided
-        if start_joints is not None and not isinstance(start_joints, np.ndarray):
-            start_joints = np.array(start_joints)
-        if dynamixel_config is not None:
-            self._robot = dynamixel_config.make_robot(
-                port=port, start_joints=start_joints
-            )
-        else:
-            assert os.path.exists(port), port
-            assert port in PORT_CONFIG_MAP, f"Port {port} not in config map"
+PORT = "/dev/serial/by-id/usb-FTDI_USB__-__Serial_Converter_FTA2U2O3-if00-port0"  # example
 
-            config = PORT_CONFIG_MAP[port]
-            self._robot = config.make_robot(port=port, start_joints=start_joints)
+if PORT not in PORT_CONFIG_MAP:
+    raise ValueError(f"Port {PORT} not in configuration map.")
 
-    def act(self, obs: Dict[str, np.ndarray]) -> np.ndarray:
-        return self._robot.get_joint_state()
+# Initialize robot using the config
+robot_config = PORT_CONFIG_MAP[PORT]
+robot = robot_config.make_robot(port=PORT)
+
+# Print joint values continuously
+try:
+    while True:
+        joints = robot.get_joint_state()  # Should return np.ndarray
+        print("Joint values (radians):", np.round(joints, 3))
+        time.sleep(0.5)
+
+except KeyboardInterrupt:
+    print("Stopped.")

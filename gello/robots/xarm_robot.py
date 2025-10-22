@@ -8,6 +8,8 @@ from pyquaternion import Quaternion
 
 from gello.robots.robot import Robot
 
+from gello.dynamixel.driver import DynamixelDriver
+
 
 def _aa_from_quat(quat: np.ndarray) -> np.ndarray:
     """Convert a quaternion to an axis-angle representation.
@@ -54,7 +56,7 @@ class RobotState:
     x: float
     y: float
     z: float
-    gripper: float
+    gripper: float #changes comment out
     j1: float
     j2: float
     j3: float
@@ -75,7 +77,7 @@ class RobotState:
             cartesian[0],
             cartesian[1],
             cartesian[2],
-            gripper,
+            gripper, #changes comment out
             joints[0],
             joints[1],
             joints[2],
@@ -95,7 +97,7 @@ class RobotState:
     def joints(self) -> np.ndarray:
         return np.array([self.j1, self.j2, self.j3, self.j4, self.j5, self.j6, self.j7])
 
-    def gripper_pos(self) -> float:
+    def gripper_pos(self) -> float: #Changes comment out
         return self.gripper
 
 
@@ -115,20 +117,104 @@ class Rate:
             time.sleep(remaining)
         self.last = time.time()
 
+class PepperGripper:
+    def __init__(self, joint_ids, port_tool, baudrate: int = 57600):
+        self.port_tool = port_tool
+        # connect to dynamixel
+        if self.port_tool is not None:
+            self._driver = DynamixelDriver(joint_ids, port=port_tool, baudrate=baudrate)
+            self._driver.set_torque_mode(True)
+        self._torque_on = True
+        # TODO get min max values here
+        self.init_pos = self._driver.get_joints()
+        # self.gripper_open = self.init_pos
+        self.gripper_open = [30 * (np.pi/180), 30 * (np.pi/180), 30 * (np.pi/180)]
+        # self.gripper_close = np.copy(self.init_pos)
+        # self.gripper_close[0] += 0.8 * np.pi
+        # self.gripper_close[1] += 0.8 * np.pi
+        # self.gripper_close[2] += 0.8 * np.pi
+        self.gripper_close = [270 * (np.pi/180), 270 * (np.pi/180), 270 * (np.pi/180)]
 
-class XArmRobot(Robot):
-    GRIPPER_OPEN = 800
-    GRIPPER_CLOSE = 0
+    def set_gripper_position(self, pos: float, wait: bool = False) -> None:
+        if self.port_tool is None:
+            return
+        # clip pos to be between 0 and 1
+        pos = np.clip(pos, 0.0, 1.0)
+        #  pos is 0.0 for open gripper, 1.0 for closed gripper
+        pos_cmd = np.array(self.gripper_open) + pos * (np.array(self.gripper_close) - np.array(self.gripper_open))
+        # pos_cmd = [512, 512, 512]  # open position
+        print(f"pos_cmd: {pos_cmd}")
+        # self._driver.set_joints(pos_cmd)
+        try:
+            self._driver.set_joints(pos_cmd)
+        except Exception as e:
+            print(f"SyncWrite failed for motors with positions {pos_cmd}")
+            print(f"Error details: {str(e)}")
+            raise
+
+    def set_torque_mode(self, mode: bool):
+        if mode == self._torque_on:
+            return
+        self._driver.set_torque_mode(mode)
+        self._torque_on = mode
+
+    def get_joints(self):
+        return self._driver.get_joints()
+
+    def get_position(self):
+        # return normalized position
+        return (self._driver.get_joints()[0] - self.gripper_open[0]) / (self.gripper_close[0] - self.gripper_open[0])
+
+
+class PepperCutter:
+    def __init__(self, joint_ids, port_tool, baudrate: int = 57600):
+        self.port_tool = port_tool
+        # connect to dynamixel
+        if self.port_tool is not None:
+            self._driver = DynamixelDriver([joint_ids], port=port_tool, baudrate=baudrate)
+            self._driver.set_torque_mode(True)
+        self._torque_on = True
+        # TODO get min max values here
+        self.init_pos = self._driver.get_joints()
+        self.gripper_open = self.init_pos
+        self.gripper_close = np.copy(self.init_pos)
+        self.gripper_close += 110.0 / 180.0 * np.pi
+
+    def set_gripper_position(self, pos: float, wait: bool = False) -> None:
+        if self.port_tool is None:
+            return
+        # clip pos to be between 0 and 1
+        pos = np.clip(pos, 0.0, 1.0)
+        #  pos is 0.0 for open gripper, 1.0 for closed gripper
+        pos_cmd = np.array(self.gripper_open) + pos * (np.array(self.gripper_close) - np.array(self.gripper_open))
+        self._driver.set_joints(pos_cmd)
+
+    def set_torque_mode(self, mode: bool):
+        if mode == self._torque_on:
+            return
+        self._driver.set_torque_mode(mode)
+        self._torque_on = mode
+
+    def get_joints(self):
+        return self._driver.get_joints()
+
+    def get_position(self):
+        # return normalized position
+        return (self._driver.get_joints()[0] - self.gripper_open[0]) / (self.gripper_close[0] - self.gripper_open[0])
+    
+class XArmRobotGripper(Robot):
+    GRIPPER_OPEN = 0.0 
+    GRIPPER_CLOSE = 1.0
     #  MAX_DELTA = 0.2
     DEFAULT_MAX_DELTA = 0.05
 
     def num_dofs(self) -> int:
-        return 8
+        return 8 
 
     def get_joint_state(self) -> np.ndarray:
         state = self.get_state()
-        gripper = state.gripper_pos()
-        all_dofs = np.concatenate([state.joints(), np.array([gripper])])
+        gripper = state.gripper_pos() 
+        all_dofs = np.concatenate([state.joints(), np.array([gripper])])  
         return all_dofs
 
     def command_joint_state(self, joint_state: np.ndarray) -> None:
@@ -149,33 +235,45 @@ class XArmRobot(Robot):
         if self.command_thread is not None:
             self.command_thread.join()
 
+
     def __init__(
         self,
+        name: str = "xarm_right",
         ip: str = "192.168.1.226",
         real: bool = True,
         control_frequency: float = 50.0,
         max_delta: float = DEFAULT_MAX_DELTA,
+        port_tool: Optional[str] = None,
+        ids_tool: Optional[list] = None,
+        tool: int = 0,  # 0 for gripper, 1 for cutter
+        ROS_control: bool = False,
     ):
         print(ip)
+        print('asedfr')
         self.real = real
         self.max_delta = max_delta
         if real:
             from xarm.wrapper import XArmAPI
 
             self.robot = XArmAPI(ip, is_radian=True)
+            if tool == 0:
+                self.gripper = PepperGripper(ids_tool, port_tool)
+                self._set_gripper_position(self.GRIPPER_OPEN) #check if self.GRIPPER_OPEN is
+            elif tool == 1:
+                self.gripper = PepperCutter(ids_tool, port_tool)
+                self._set_gripper_position(self.GRIPPER_OPEN)
         else:
             self.robot = None
-
+        print("out of real if")
         self._control_frequency = control_frequency
         self._clear_error_states()
-        self._set_gripper_position(self.GRIPPER_OPEN)
 
         self.last_state_lock = threading.Lock()
         self.target_command_lock = threading.Lock()
         self.last_state = self._update_last_state()
         self.target_command = {
             "joints": self.last_state.joints(),
-            "gripper": 0,
+            "gripper": 0.0,
         }
         self.running = True
         self.command_thread = None
@@ -191,7 +289,7 @@ class XArmRobot(Robot):
         with self.target_command_lock:
             self.target_command = {
                 "joints": joints,
-                "gripper": gripper,
+                "gripper": gripper, #changes comment out
             }
 
     def _clear_error_states(self):
@@ -207,33 +305,37 @@ class XArmRobot(Robot):
         time.sleep(1)
         self.robot.set_state(state=0)
         time.sleep(1)
-        self.robot.set_gripper_enable(True)
-        time.sleep(1)
-        self.robot.set_gripper_mode(0)
-        time.sleep(1)
-        self.robot.set_gripper_speed(3000)
-        time.sleep(1)
+        # self.robot.set_gripper_enable(True) #commented out for now to avoid issues with gripper
+        # time.sleep(1)
+        # self.robot.set_gripper_mode(0)
+        # time.sleep(1)
+        # self.robot.set_gripper_speed(3000)
+        # time.sleep(1)
 
     def _get_gripper_pos(self) -> float:
         if self.robot is None:
             return 0.0
-        code, gripper_pos = self.robot.get_gripper_position()
-        while code != 0 or gripper_pos is None:
-            print(f"Error code {code} in get_gripper_position(). {gripper_pos}")
-            time.sleep(0.001)
-            code, gripper_pos = self.robot.get_gripper_position()
-            if code == 22:
-                self._clear_error_states()
+        return self.gripper.get_position()
+        # if self.robot is None: # commented out for now to avoid issues with gripper
+        #     return 0.0
+        # code, gripper_pos = self.robot.get_gripper_position()
+        # while code != 0 or gripper_pos is None:
+        #     print(f"Error code {code} in get_gripper_position(). {gripper_pos}")
+        #     time.sleep(0.001)
+        #     code, gripper_pos = self.robot.get_gripper_position()
+        #     if code == 22:
+        #         self._clear_error_states()
 
-        normalized_gripper_pos = (gripper_pos - self.GRIPPER_OPEN) / (
-            self.GRIPPER_CLOSE - self.GRIPPER_OPEN
-        )
-        return normalized_gripper_pos
+        # normalized_gripper_pos = (gripper_pos - self.GRIPPER_OPEN) / (
+        #     self.GRIPPER_CLOSE - self.GRIPPER_OPEN
+        # )
+        # return normalized_gripper_pos
 
-    def _set_gripper_position(self, pos: int) -> None:
-        if self.robot is None:
+    def _set_gripper_position(self, pos: float) -> None:
+        if self.gripper is None:
             return
-        self.robot.set_gripper_position(pos, wait=False)
+        print(f"Setting gripper to pos {pos}")
+        self.gripper.set_gripper_position(pos, wait=False)
         # while self.robot.get_is_moving():
         #     time.sleep(0.01)
 
@@ -253,6 +355,7 @@ class XArmRobot(Robot):
                     self.target_command["joints"] - self.last_state.joints()
                 )
                 gripper_command = self.target_command["gripper"]
+                # gripper_command = self.target_command["gripper"] # commented out for now to avoid issues with gripper
 
             norm = np.linalg.norm(joint_delta)
 
@@ -267,7 +370,7 @@ class XArmRobot(Robot):
                 self.last_state.joints() + delta,
             )
 
-            if gripper_command is not None:
+            if gripper_command is not None: 
                 set_point = gripper_command
                 self._set_gripper_position(
                     self.GRIPPER_OPEN
@@ -292,7 +395,7 @@ class XArmRobot(Robot):
             if self.robot is None:
                 return RobotState(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, np.zeros(3))
 
-            gripper_pos = self._get_gripper_pos()
+            gripper_pos = self._get_gripper_pos() 
 
             code, servo_angle = self.robot.get_servo_angle(is_radian=True)
             while code != 0:
@@ -313,7 +416,7 @@ class XArmRobot(Robot):
             return RobotState.from_robot(
                 cart_pos,
                 servo_angle,
-                gripper_pos,
+                gripper_pos, #changes comment out
                 aa,
             )
 
@@ -332,17 +435,23 @@ class XArmRobot(Robot):
         state = self.get_state()
         pos_quat = np.concatenate([state.cartesian_pos(), state.quat()])
         joints = self.get_joint_state()
+        gripper_position = self.gripper.get_joints()
         return {
             "joint_positions": joints,  # rotational joint + gripper state
             "joint_velocities": joints,
             "ee_pos_quat": pos_quat,
-            "gripper_position": np.array(state.gripper_pos()),
+            "gripper_position": gripper_position,
         }
 
 
 def main():
     ip = "192.168.1.226"
-    robot = XArmRobot(ip)
+    robot = XArmRobotGripper(
+        ip=ip,
+        port_tool="/dev/ttyUSB0",  # Your Dynamixel USB port
+        ids_tool=[1, 2, 4],  # Your Dynamixel motor IDs
+        tool=0  # 0 for gripper, 1 for cutter
+    )
     import time
 
     time.sleep(1)

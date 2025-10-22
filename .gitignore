@@ -38,3 +38,7 @@ third_party/i2rt/
 
 # 3D Model Files
 *.stl
+
+arena.xml
+get-pip.py
+.vscode/

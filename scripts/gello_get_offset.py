@@ -16,13 +16,13 @@ MENAGERIE_ROOT: Path = Path(__file__).parent / "third_party" / "mujoco_menagerie
 
 @dataclass
 class Args:
-    port: str = "/dev/ttyUSB0"
+    port: str = "/dev/serial/by-id/usb-FTDI_USB__-__Serial_Converter_FTA2U2O3-if00-port0"
     """The port that GELLO is connected to."""
 
-    start_joints: Tuple[float, ...] = (0, 0, 0, 0, 0, 0)
+    start_joints: Tuple[float, ...] = (0, 0, 0, 0, 0, 0, 0)
     """The joint angles that the GELLO is placed in at (in radians)."""
 
-    joint_signs: Tuple[float, ...] = (1, 1, -1, 1, 1, 1)
+    joint_signs: Tuple[float, ...] = (1, 1, 1, 1, 1, 1, 1)
     """The joint angles that the GELLO is placed in at (in radians)."""
 
     gripper: bool = True
