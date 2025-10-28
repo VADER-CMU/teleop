@@ -1,5 +1,7 @@
 from abc import abstractmethod
 from typing import Dict, Protocol
+import threading
+import time
 
 import numpy as np
 
@@ -89,6 +91,7 @@ class BimanualRobot(Robot):
     def __init__(self, robot_l: Robot, robot_r: Robot):
         self._robot_l = robot_l
         self._robot_r = robot_r
+        self._command_lock = threading.Lock()
 
     def num_dofs(self) -> int:
         return self._robot_l.num_dofs() + self._robot_r.num_dofs()
@@ -99,8 +102,10 @@ class BimanualRobot(Robot):
         )
 
     def command_joint_state(self, joint_state: np.ndarray) -> None:
-        self._robot_l.command_joint_state(joint_state[: self._robot_l.num_dofs()])
-        self._robot_r.command_joint_state(joint_state[self._robot_l.num_dofs() :])
+        with self._command_lock:
+            self._robot_l.command_joint_state(joint_state[: self._robot_l.num_dofs()])
+            time.sleep(0.01)
+            self._robot_r.command_joint_state(joint_state[self._robot_l.num_dofs() :])
 
     def get_observations(self) -> Dict[str, np.ndarray]:
         l_obs = self._robot_l.get_observations()

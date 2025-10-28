@@ -14,11 +14,11 @@ class Args:
     robot: str = "xarm"
     robot_port: int = 6001
     hostname: str = "127.0.0.1"
-    robot_right_ip: str = "192.168.1.195"  # right arm, change as required
-    robot_left_ip: str = "192.168.1.230"  # left arm, change as required
-    port_gripper: str = "/dev/serial/by-id/usb-FTDI_USB__-__Serial_Converter_FT89I74E-if00-port0" #change as required
+    robot_right_ip: str = "192.168.1.201"  # right arm, change as required
+    robot_left_ip: str = "192.168.1.195"  # left arm, change as required
+    port_gripper: str = "/dev/serial/by-id/usb-FTDI_USB__-__Serial_Converter_FTA2U12T-if00-port0" #change as required
     ids_gripper: Sequence[int] = (1, 2, 4)
-    port_cutter: str = "/dev/ttyUSB4" #change as required
+    port_cutter: str = "/dev/serial/by-id/usb-FTDI_USB__-__Serial_Converter_FT89I74E-if00-port0" #change as required
     ids_cutter: int = 0 
     ros: bool = False
 
@@ -76,17 +76,12 @@ def launch_robot_server(args: Args):
     else:
         if args.robot == "xarm":
             from gello.robots.xarm_robot import XArmRobotGripper
-            print("asdf")
-            robot = XArmRobotGripper(name="xarm_right", ip=args.robot_right_ip, port_tool=args.port_gripper, ids_tool=args.ids_gripper, tool=0, ROS_control=False)
+            robot = XArmRobotGripper(name="xarm_right", ip=args.robot_left_ip, port_tool=args.port_cutter, ids_tool=args.ids_cutter, tool=1, ROS_control=False)
 
         #added bimanual xarm option
         elif args.robot == "bimanual_xarm":
             from gello.robots.xarm_robot import XArmRobotGripper
 
-            # IP for the bimanual robot setup is hardcoded
-            # _robot_l = XArmRobotGripper(ip="192.168.2.10")
-            # _robot_r = XArmRobotGripper(ip="192.168.1.10")
-            # robot = BimanualRobot(_robot_l, _robot_r)
             print("init gripper at " + args.port_gripper)
             print("gripper ids " + str(args.ids_gripper))
 
@@ -97,7 +92,9 @@ def launch_robot_server(args: Args):
             #     rospy.init_node("robot_xarm")
 
             robot_right = XArmRobotGripper(name="xarm_right", ip=args.robot_right_ip, port_tool=args.port_gripper, ids_tool=args.ids_gripper, tool=0, ROS_control=False)
+            print("initialized 1 arm")
             robot_left = XArmRobotGripper(name="xarm_left", ip=args.robot_left_ip, port_tool=args.port_cutter, ids_tool=args.ids_cutter, tool=1, ROS_control=False)
+            print("initialized both arms")
             robot = BimanualRobot(robot_left, robot_right)
 
 

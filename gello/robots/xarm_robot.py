@@ -249,7 +249,6 @@ class XArmRobotGripper(Robot):
         ROS_control: bool = False,
     ):
         print(ip)
-        print('asedfr')
         self.real = real
         self.max_delta = max_delta
         if real:
@@ -264,9 +263,48 @@ class XArmRobotGripper(Robot):
                 self._set_gripper_position(self.GRIPPER_OPEN)
         else:
             self.robot = None
-        print("out of real if")
         self._control_frequency = control_frequency
-        self._clear_error_states()
+        
+
+
+        if real and self.robot is not None:
+            print(f"Initializing robot at {ip}...")
+            self.robot.clean_error()
+            time.sleep(0.5)
+            self.robot.clean_warn()
+            time.sleep(0.5)
+            
+            self.robot.motion_enable(True)
+            time.sleep(0.5)
+            
+            self.robot.set_mode(1)  # Servo motion mode
+            time.sleep(0.5)
+            
+            self.robot.set_state(state=0)  # Ready state
+            time.sleep(1)  # Wait longer for ready state
+            
+            # Verify robot is ready before setting collision sensitivity
+            code, state = self.robot.get_state()
+            print(f"Robot state: code={code}, state={state}")
+            
+            if state == 0:
+                # Set collision sensitivity only when ready
+                ret = self.robot.set_collision_sensitivity(0)
+                time.sleep(0.5)
+                
+                if ret == 0:
+                    print(f"✓ Collision detection DISABLED for {ip}")
+                else:
+                    print(f"⚠ Failed to disable collision (code={ret}), trying level 5...")
+                    ret = self.robot.set_collision_sensitivity(5)
+                    if ret == 0:
+                        print(f"✓ Collision sensitivity set to 5 (least sensitive) for {ip}")
+                    else:
+                        print(f"⚠ WARNING: Could not set collision sensitivity for {ip}")
+            else:
+                print(f"⚠ Cannot set collision sensitivity - robot state is {state}")
+
+
 
         self.last_state_lock = threading.Lock()
         self.target_command_lock = threading.Lock()
@@ -295,16 +333,21 @@ class XArmRobotGripper(Robot):
     def _clear_error_states(self):
         if self.robot is None:
             return
+        
         self.robot.clean_error()
+        time.sleep(0.5)
+        
         self.robot.clean_warn()
+        time.sleep(0.3)
+        
         self.robot.motion_enable(True)
-        time.sleep(1)
+        time.sleep(0.5)
+        
         self.robot.set_mode(1)
-        time.sleep(1)
-        self.robot.set_collision_sensitivity(0)
-        time.sleep(1)
+        time.sleep(0.3)
+        
         self.robot.set_state(state=0)
-        time.sleep(1)
+        time.sleep(0.5)
         # self.robot.set_gripper_enable(True) #commented out for now to avoid issues with gripper
         # time.sleep(1)
         # self.robot.set_gripper_mode(0)
@@ -334,7 +377,6 @@ class XArmRobotGripper(Robot):
     def _set_gripper_position(self, pos: float) -> None:
         if self.gripper is None:
             return
-        print(f"Setting gripper to pos {pos}")
         self.gripper.set_gripper_position(pos, wait=False)
         # while self.robot.get_is_moving():
         #     time.sleep(0.01)
@@ -427,9 +469,29 @@ class XArmRobotGripper(Robot):
         if self.robot is None:
             return
         # threhold xyz to be in  min max
-        ret = self.robot.set_servo_angle_j(joints, wait=False, is_radian=True)
-        if ret in [1, 9]:
-            self._clear_error_states()
+
+        # ret = self.robot.set_servo_angle_j(joints, wait=False, is_radian=True)
+        # if ret in [1, 9]:
+        #     self._clear_error_states()
+
+        max_retries = 2
+        for attempt in range(max_retries):
+            ret = self.robot.set_servo_angle_j(joints, wait=False, is_radian=True)
+            
+            if ret == 0:  # Success
+                return
+            
+            # Error occurred
+            if ret in [1, 9]:
+                if attempt < max_retries - 1:
+                    print(f"Command error (code={ret}), retrying...")
+                    self._clear_error_states()
+                    time.sleep(0.2)
+                else:
+                    print(f"Command failed after {max_retries} attempts")
+                    self._clear_error_states()
+        
+
 
     def get_observations(self) -> Dict[str, np.ndarray]:
         state = self.get_state()

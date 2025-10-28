@@ -28,7 +28,7 @@ class Args:
     base_camera_port: int = 5001
     hostname: str = "127.0.0.1"
     robot_type: str = None  # only needed for quest agent or spacemouse agent
-    hz: int = 100
+    hz: int = 20
     start_joints: Optional[Tuple[float, ...]] = None
 
     gello_port: Optional[str] = None #CHANGE TO FIXED PORT
@@ -60,8 +60,8 @@ def main(args):
     if args.bimanual:
         if args.agent == "gello":
             # dynamixel control box port map (to distinguish left and right gello)
-            right = "/dev/serial/by-id/usb-FTDI_USB__-__Serial_Converter_FT7WBG6A-if00-port0"
-            left = "/dev/serial/by-id/usb-FTDI_USB__-__Serial_Converter_FT7WBEIA-if00-port0"
+            right = "/dev/serial/by-id/usb-FTDI_USB__-__Serial_Converter_FT88YYGL-if00-port0"
+            left = "/dev/serial/by-id/usb-FTDI_USB__-__Serial_Converter_FTA2U2O3-if00-port0"
             agent_cfg = {
                 "_target_": "gello.agents.agent.BimanualAgent",
                 "agent_left": {
@@ -71,8 +71,10 @@ def main(args):
                 "agent_right": {
                     "_target_": "gello.agents.gello_agent.GelloAgent",
                     "port": right,
-                },
+                },               
             }
+            print(f"inside bimanual gello, left port: {left}, right port: {right}")
+
         elif args.agent == "quest":
             agent_cfg = {
                 "_target_": "gello.agents.agent.BimanualAgent",
@@ -111,15 +113,19 @@ def main(args):
 
         # System setup specific. This reset configuration works well on our setup. If you are mounting the robot
         # differently, you need a separate reset joint configuration.
-        reset_joints_left = np.deg2rad([0, -90, -90, -90, 90, 0, 0])
-        reset_joints_right = np.deg2rad([0, -90, 90, -90, -90, 0, 0])
+        reset_joints_left = np.deg2rad([0, 0, 0, 90, 0, 0, 0, 0])
+        reset_joints_right = np.deg2rad([0, 0, 0, 90, 0, 0, 0, 0])
         reset_joints = np.concatenate([reset_joints_left, reset_joints_right])
+        print(f"before observation")
         curr_joints = env.get_obs()["joint_positions"]
+        print(f"got observation, curr_joints shape: {curr_joints.shape}")
         max_delta = (np.abs(curr_joints - reset_joints)).max()
         steps = min(int(max_delta / 0.01), 100)
 
         for jnt in np.linspace(curr_joints, reset_joints, steps):
+            print(f"inside bimanual reset loop, jnt: {jnt}")
             env.step(jnt)
+            time.sleep(0.001)
     else:
         if args.agent == "gello":
             gello_port = args.gello_port
@@ -127,7 +133,8 @@ def main(args):
                 usb_ports = glob.glob("/dev/serial/by-id/*")
                 print(f"Found {len(usb_ports)} ports")
                 if len(usb_ports) > 0: #CHANGE TO FIXED PORT
-                    gello_port = usb_ports[0]
+                    # gello_port = usb_ports[1]
+                    gello_port = "/dev/serial/by-id/usb-FTDI_USB__-__Serial_Converter_FTA2U2O3-if00-port0"
                     print(f"using port {gello_port}")
                 else:
                     raise ValueError(
@@ -140,7 +147,7 @@ def main(args):
             }
             if args.start_joints is None:
                 reset_joints = np.deg2rad(
-                    [0, -90, 90, -90, -90, 0, 0]
+                    [0, 0, 0, 90, 0, 0, 0]
                 )  # Change this to your own reset joints
             else:
                 reset_joints = np.array(args.start_joints)
@@ -216,13 +223,14 @@ def main(args):
         if max_joint_delta > max_delta:
             delta = delta / max_joint_delta * max_delta
         env.step(current_joints + delta)
+        # time.sleep(0.01)  
 
     obs = env.get_obs()
     joints = obs["joint_positions"]
     action = agent.act(obs)
     if (action - joints > 0.5).any():
         print("Action:" , action)
-        print("JOint:", joints)
+        print("Joint:", joints)
         print("Action is too big")
 
         # print which joints are too big

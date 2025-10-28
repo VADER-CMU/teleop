@@ -27,7 +27,7 @@ class RobotEnv:
     ) -> None:
         self._robot = robot
         self._rate = Rate(control_rate_hz)
-        self._camera_dict = {} if camera_dict is None else camera_dict
+        self._camera_dict = {}
 
     def robot(self) -> Robot:
         """Get the robot object.
@@ -69,7 +69,10 @@ class RobotEnv:
             observations[f"{name}_rgb"] = image
             observations[f"{name}_depth"] = depth
 
+        print("Getting robot observations...")
         robot_obs = self._robot.get_observations()
+        print("Got robot observations")
+
         assert "joint_positions" in robot_obs
         assert "joint_velocities" in robot_obs
         assert "ee_pos_quat" in robot_obs
