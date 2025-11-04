@@ -176,14 +176,17 @@ class PepperCutter:
         self._torque_on = True
         # TODO get min max values here
         self.init_pos = self._driver.get_joints()
-        self.gripper_open = self.init_pos
-        self.gripper_close = np.copy(self.init_pos)
+        self.gripper_open = np.array([205.05]) * np.pi / 180 # self.init_pos
+        self.gripper_close = np.array([342.77]) * np.pi / 180 #np.copy(self.init_pos)
         self.gripper_close += 110.0 / 180.0 * np.pi
+        # print("Peppercutter: gripper open pos:", self.gripper_open)
+        # print("Peppercutter: gripper close pos:", self.gripper_close)
 
     def set_gripper_position(self, pos: float, wait: bool = False) -> None:
         if self.port_tool is None:
             return
         # clip pos to be between 0 and 1
+        # print(f"Setting cutter position to {pos} clipped between 0 and 1")
         pos = np.clip(pos, 0.0, 1.0)
         #  pos is 0.0 for open gripper, 1.0 for closed gripper
         pos_cmd = np.array(self.gripper_open) + pos * (np.array(self.gripper_close) - np.array(self.gripper_open))
@@ -430,6 +433,8 @@ class XArmRobotGripper(Robot):
                 print(
                     f"Low  Level Frequency - mean: {frequency:10.3f}, std: {np.std(frequency):10.3f}, min: {np.min(frequency):10.3f}, max: {np.max(frequency):10.3f}"
                 )
+                #Low  Level Frequency - mean:     24.311, std:      0.000, min:     24.311, max:     24.311
+
                 step_times = []
 
     def _update_last_state(self) -> RobotState:
