@@ -241,7 +241,7 @@ class XArmRobotGripper(Robot):
         name: str = "xarm_right",
         ip: str = "192.168.1.226",
         real: bool = True,
-        control_frequency: float = 50.0,
+        control_frequency: float = 100.0,#50.0,
         max_delta: float = DEFAULT_MAX_DELTA,
         port_tool: Optional[str] = None,
         ids_tool: Optional[list] = None,

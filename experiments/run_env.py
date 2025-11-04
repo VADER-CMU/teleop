@@ -30,7 +30,7 @@ class Args:
     base_camera_port: int = 5001
     hostname: str = "127.0.0.1"
     robot_type: str = None  # only needed for quest agent or spacemouse agent
-    hz: int = 20
+    hz: int = 100 #20
     start_joints: Optional[Tuple[float, ...]] = None
 
     gello_port: Optional[str] = None #CHANGE TO FIXED PORT
@@ -173,7 +173,7 @@ def main(args):
         if max_joint_delta > max_delta:
             delta = delta / max_joint_delta * max_delta
         env.step(current_joints + delta)
-        # time.sleep(0.01)  
+        time.sleep(0.01)  
 
     obs = env.get_obs()
     joints = obs["joint_positions"]
