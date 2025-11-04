@@ -7,7 +7,7 @@ import numpy as np
 from gello.agents.agent import Agent
 from gello.robots.dynamixel import DynamixelRobot
 
-
+from gello.vader_teleop_config_reader import VADERTeleopConfigReader
 @dataclass
 class DynamixelRobotConfig:
     joint_ids: Sequence[int]
@@ -30,7 +30,7 @@ class DynamixelRobotConfig:
         assert len(self.joint_ids) == len(self.joint_signs)
 
     def make_robot(
-        self, port: str = "/dev/ttyUSB2", start_joints: Optional[np.ndarray] = None
+        self, port: str, start_joints: Optional[np.ndarray] = None
     ) -> DynamixelRobot:
         return DynamixelRobot(
             joint_ids=self.joint_ids,
@@ -41,88 +41,6 @@ class DynamixelRobotConfig:
             gripper_config=self.gripper_config,
             start_joints=start_joints,
         )
-
-
-PORT_CONFIG_MAP: Dict[str, DynamixelRobotConfig] = {
-    # xArm
-    "/dev/serial/by-id/usb-FTDI_USB__-__Serial_Converter_FTA2U2O3-if00-port0": DynamixelRobotConfig(
-        joint_ids=(1, 2, 3, 4, 5, 6, 7),
-        joint_offsets=(
-            4 * np.pi / 2,
-            -1 * np.pi / 2,
-            3 * np.pi / 2,
-            1 * np.pi / 2,
-            7 * np.pi / 2,
-            0 * np.pi / 2,
-            -2 * np.pi / 2,
-        ),
-        joint_signs=(1, 1, 1, 1, 1, 1, 1),
-        gripper_config=(8, 190, 148),
-    ),
-
-    # xArm
-    "/dev/serial/by-id/usb-FTDI_USB__-__Serial_Converter_FT88YYGL-if00-port0": DynamixelRobotConfig(
-        joint_ids=(1, 2, 3, 4, 5, 6, 7),
-        joint_offsets=(
-            3 * np.pi / 2,
-            2 * np.pi / 2,
-            0 * np.pi / 2,
-            1 * np.pi / 2,
-            1 * np.pi / 2,
-            3 * np.pi / 2,
-            0 * np.pi / 2,
-        ),
-        joint_signs=(1, 1, 1, 1, 1, 1, 1),
-        gripper_config=(8, 192, 150),
-    ),
-    # yam
-    "/dev/serial/by-id/usb-FTDI_USB__-__Serial_Converter_FTA2U4GA-if00-port0": DynamixelRobotConfig(
-        joint_ids=(1, 2, 3, 4, 5, 6),
-        joint_offsets=[
-            0 * np.pi,
-            2 * np.pi / 2,
-            4 * np.pi / 2,
-            6 * np.pi / 6,
-            5 * np.pi / 3,
-            2 * np.pi / 2,
-        ],
-        joint_signs=(1, -1, -1, -1, 1, 1),
-        gripper_config=(
-            7,
-            -30,
-            24,
-        ),  # Reversed: now starts open (-30) and closes on press (24)
-    ),
-    # Left UR
-    "/dev/serial/by-id/usb-FTDI_USB__-__Serial_Converter_FT7WBEIA-if00-port0": DynamixelRobotConfig(
-        joint_ids=(1, 2, 3, 4, 5, 6),
-        joint_offsets=(
-            0,
-            1 * np.pi / 2 + np.pi,
-            np.pi / 2 + 0 * np.pi,
-            0 * np.pi + np.pi / 2,
-            np.pi - 2 * np.pi / 2,
-            -1 * np.pi / 2 + 2 * np.pi,
-        ),
-        joint_signs=(1, 1, -1, 1, 1, 1),
-        gripper_config=(7, 20, -22),
-    ),
-    # Right UR
-    "/dev/serial/by-id/usb-FTDI_USB__-__Serial_Converter_FT7WBG6A-if00-port0": DynamixelRobotConfig(
-        joint_ids=(1, 2, 3, 4, 5, 6),
-        joint_offsets=(
-            np.pi + 0 * np.pi,
-            2 * np.pi + np.pi / 2,
-            2 * np.pi + np.pi / 2,
-            2 * np.pi + np.pi / 2,
-            1 * np.pi,
-            3 * np.pi / 2,
-        ),
-        joint_signs=(1, 1, -1, 1, 1, 1),
-        gripper_config=(7, 286, 248),
-    ),
-}
-
 
 class GelloAgent(Agent):
     def __init__(
@@ -139,11 +57,34 @@ class GelloAgent(Agent):
                 port=port, start_joints=start_joints
             )
         else:
-            assert os.path.exists(port), port
-            assert port in PORT_CONFIG_MAP, f"Port {port} not in config map"
+            config_reader = VADERTeleopConfigReader()
 
-            config = PORT_CONFIG_MAP[port]
-            self._robot = config.make_robot(port=port, start_joints=start_joints)
+            PORT_TELEOP_G = config_reader.get_teleop_gripper_port()
+            PORT_TELEOP_C = config_reader.get_teleop_cutter_port()
+
+            if port == PORT_TELEOP_G:
+                robot_G_config = DynamixelRobotConfig(
+                    joint_ids=tuple(config_reader.get_teleop_gripper_ids()),
+                    joint_offsets=tuple(
+                        offset * (np.pi / 2) for offset in config_reader.get_teleop_gripper_offsets()
+                    ),
+                    joint_signs=(1, 1, 1, 1, 1, 1, 1),  # assuming all joints have positive sign
+                    gripper_config=tuple(config_reader.get_teleop_gripper_config()),
+                )
+                self._robot = robot_G_config.make_robot(port=port, start_joints=start_joints)
+
+            elif port == PORT_TELEOP_C:
+                robot_C_config = DynamixelRobotConfig(
+                    joint_ids=tuple(config_reader.get_teleop_cutter_ids()),
+                    joint_offsets=tuple(
+                        offset * (np.pi / 2) for offset in config_reader.get_teleop_cutter_offsets()
+                    ),
+                    joint_signs=(1, 1, 1, 1, 1, 1, 1),  # assuming all joints have positive sign
+                    gripper_config=tuple(config_reader.get_teleop_cutter_config()),
+                )
+                self._robot = robot_C_config.make_robot(port=port, start_joints=start_joints)
+            else:
+                raise ValueError(f"Port {port} does not match any known teleop ports.")
 
     def act(self, obs: Dict[str, np.ndarray]) -> np.ndarray:
         return self._robot.get_joint_state()

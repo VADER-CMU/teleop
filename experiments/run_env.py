@@ -11,6 +11,8 @@ from gello.robots.robot import PrintRobot
 from gello.utils.launch_utils import instantiate_from_dict
 from gello.zmq_core.robot_node import ZMQClientRobot
 
+from gello.vader_teleop_config_reader import VADERTeleopConfigReader
+
 
 def print_color(*args, color=None, attrs=(), **kwargs):
     import termcolor
@@ -44,6 +46,7 @@ class Args:
 
 
 def main(args):
+    config_reader = VADERTeleopConfigReader()
     if args.mock:
         robot_client = PrintRobot(8, dont_print=True)
         camera_clients = {}
@@ -59,55 +62,21 @@ def main(args):
     agent_cfg = {}
     if args.bimanual:
         if args.agent == "gello":
-            # dynamixel control box port map (to distinguish left and right gello)
-            right = "/dev/serial/by-id/usb-FTDI_USB__-__Serial_Converter_FT88YYGL-if00-port0"
-            left = "/dev/serial/by-id/usb-FTDI_USB__-__Serial_Converter_FTA2U2O3-if00-port0"
+            # dynamixel control box port map (to distinguish cutter and gripper gello)
+            gripper = config_reader.get_teleop_gripper_port() #GRIPPER
+            cutter = config_reader.get_teleop_cutter_port() #CUTTER
             agent_cfg = {
                 "_target_": "gello.agents.agent.BimanualAgent",
                 "agent_left": {
                     "_target_": "gello.agents.gello_agent.GelloAgent",
-                    "port": left,
+                    "port": cutter,
                 },
                 "agent_right": {
                     "_target_": "gello.agents.gello_agent.GelloAgent",
-                    "port": right,
+                    "port": gripper,
                 },               
             }
-            print(f"inside bimanual gello, left port: {left}, right port: {right}")
-
-        elif args.agent == "quest":
-            agent_cfg = {
-                "_target_": "gello.agents.agent.BimanualAgent",
-                "agent_left": {
-                    "_target_": "gello.agents.quest_agent.SingleArmQuestAgent",
-                    "robot_type": args.robot_type,
-                    "which_hand": "l",
-                },
-                "agent_right": {
-                    "_target_": "gello.agents.quest_agent.SingleArmQuestAgent",
-                    "robot_type": args.robot_type,
-                    "which_hand": "r",
-                },
-            }
-        elif args.agent == "spacemouse":
-            left_path = "/dev/hidraw0"
-            right_path = "/dev/hidraw1"
-            agent_cfg = {
-                "_target_": "gello.agents.agent.BimanualAgent",
-                "agent_left": {
-                    "_target_": "gello.agents.spacemouse_agent.SpacemouseAgent",
-                    "robot_type": args.robot_type,
-                    "device_path": left_path,
-                    "verbose": args.verbose,
-                },
-                "agent_right": {
-                    "_target_": "gello.agents.spacemouse_agent.SpacemouseAgent",
-                    "robot_type": args.robot_type,
-                    "device_path": right_path,
-                    "verbose": args.verbose,
-                    "invert_button": True,
-                },
-            }
+            print(f"inside bimanual gello, cutter port: {cutter}, gripper port: {gripper}")
         else:
             raise ValueError(f"Invalid agent name for bimanual: {args.agent}")
 
@@ -128,18 +97,9 @@ def main(args):
             time.sleep(0.001)
     else:
         if args.agent == "gello":
-            gello_port = args.gello_port
-            if gello_port is None:
-                usb_ports = glob.glob("/dev/serial/by-id/*")
-                print(f"Found {len(usb_ports)} ports")
-                if len(usb_ports) > 0: #CHANGE TO FIXED PORT
-                    # gello_port = usb_ports[1]
-                    gello_port = "/dev/serial/by-id/usb-FTDI_USB__-__Serial_Converter_FTA2U2O3-if00-port0"
-                    print(f"using port {gello_port}")
-                else:
-                    raise ValueError(
-                        "No gello port found, please specify one or plug in gello"
-                    )
+            arm = "cutter"  # or "gripper"
+            gello_port = (config_reader.get_teleop_cutter_port() if arm == "cutter"
+                          else config_reader.get_teleop_gripper_port())
             agent_cfg = {
                 "_target_": "gello.agents.gello_agent.GelloAgent",
                 "port": gello_port,
@@ -160,18 +120,6 @@ def main(args):
                 for jnt in np.linspace(curr_joints, reset_joints, steps):
                     env.step(jnt)
                     time.sleep(0.001)
-        elif args.agent == "quest":
-            agent_cfg = {
-                "_target_": "gello.agents.quest_agent.SingleArmQuestAgent",
-                "robot_type": args.robot_type,
-                "which_hand": "l",
-            }
-        elif args.agent == "spacemouse":
-            agent_cfg = {
-                "_target_": "gello.agents.spacemouse_agent.SpacemouseAgent",
-                "robot_type": args.robot_type,
-                "verbose": args.verbose,
-            }
         elif args.agent == "dummy" or args.agent == "none":
             agent_cfg = {
                 "_target_": "gello.agents.agent.DummyAgent",
@@ -188,6 +136,8 @@ def main(args):
     start_pos = agent.act(env.get_obs())
     obs = env.get_obs()
     joints = obs["joint_positions"]
+    print("joints" + str(joints))
+    print("start_pos" + str(start_pos))
 
     abs_deltas = np.abs(start_pos - joints)
     id_max_joint_delta = np.argmax(abs_deltas)

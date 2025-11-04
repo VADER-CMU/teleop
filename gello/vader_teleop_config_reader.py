@@ -5,8 +5,8 @@ class VADERTeleopConfigReader:
     def __init__(self):
         base_path = Path(__file__).parent.resolve()
         config_path: str = "../configs/vader_teleop_config.yaml"
-        self.config_path = base_path / config_path
-        print(self.config_path)
+        config_path = base_path / config_path
+        print(config_path)
         with open(config_path, 'r') as file:
             self.config = yaml.safe_load(file)
 
