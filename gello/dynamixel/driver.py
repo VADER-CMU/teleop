@@ -249,8 +249,8 @@ class DynamixelDriver(DynamixelDriverProtocol):
             if dxl_comm_result != COMM_SUCCESS:
                 print(f"Failed to syncwrite goal position: {dxl_comm_result}")
                 # raise RuntimeError("Failed to syncwrite goal position")
-            else:
-                print("Success")
+            # else:
+                # print("Success")
             # Clear syncwrite parameter storage
             self._groupSyncWrite.clearParam()
 

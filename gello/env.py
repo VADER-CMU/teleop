@@ -69,9 +69,9 @@ class RobotEnv:
             observations[f"{name}_rgb"] = image
             observations[f"{name}_depth"] = depth
 
-        print("Getting robot observations...")
+        # print("Getting robot observations...")
         robot_obs = self._robot.get_observations()
-        print("Got robot observations")
+        # print("Got robot observations")
 
         assert "joint_positions" in robot_obs
         assert "joint_velocities" in robot_obs
