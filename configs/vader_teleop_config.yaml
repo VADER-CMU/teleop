@@ -1,0 +1,15 @@
+teleop_G: # "Right" arm
+  port: "/dev/serial/by-id/usb-FTDI_USB__-__Serial_Converter_FT88YYGL-if00-port0"
+
+teleop_C: # "Left" arm
+  port: "/dev/serial/by-id/usb-FTDI_USB__-__Serial_Converter_FTA2U2O3-if00-port0"
+
+gripper:
+  port: "/dev/serial/by-id/usb-FTDI_USB__-__Serial_Converter_FTA2U12T-if00-port0"
+  arm_ip: "192.168.1.195"
+  ids: [1,2,4]
+
+cutter:
+  port: "/dev/serial/by-id/usb-FTDI_USB__-__Serial_Converter_FT89I74E-if00-port0"
+  arm_ip: "192.168.1.201"
+  id: 0

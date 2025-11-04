@@ -3,6 +3,7 @@ import numpy as np
 from dataclasses import dataclass
 from typing import Dict, Optional, Sequence, Tuple
 
+from gello.vader_teleop_config_reader import VADERTeleopConfigReader
 
 from gello.agents.agent import Agent
 from gello.robots.dynamixel import DynamixelRobot
@@ -124,6 +125,15 @@ PORT_CONFIG_MAP: Dict[str, DynamixelRobotConfig] = {
     ),
 }
 
+reader = VADERTeleopConfigReader()
+print("Teleop G Port:", reader.get_teleop_port("G"))
+print("Teleop C Port:", reader.get_teleop_port("C"))
+print("Gripper Port:", reader.get_gripper_port())
+print("Gripper Arm IP:", reader.get_gripper_arm_ip())
+print("Gripper IDs:", reader.get_gripper_ids())
+print("Cutter Port:", reader.get_cutter_port())
+print("Cutter Arm IP:", reader.get_cutter_arm_ip())
+print("Cutter ID:", reader.get_cutter_id())
 
 PORT = "/dev/serial/by-id/usb-FTDI_USB__-__Serial_Converter_FTA2U2O3-if00-port0"  # example
 
@@ -133,6 +143,7 @@ if PORT not in PORT_CONFIG_MAP:
 # Initialize robot using the config
 robot_config = PORT_CONFIG_MAP[PORT]
 robot = robot_config.make_robot(port=PORT)
+
 
 # Print joint values continuously
 try:
