@@ -60,6 +60,12 @@ class VADERTeleopConfigReader:
 
     def get_cutter_id(self) -> int:
         return self._get(self.config, "cutter", "id")
+    
+    def get_gripper_reset_joints(self) -> list:
+        return self._get(self.config, "gripper", "reset_joints")
+    
+    def get_cutter_reset_joints(self) -> list:
+        return self._get(self.config, "cutter", "reset_joints")
 
 if __name__ == "__main__":
     reader = VADERTeleopConfigReader()

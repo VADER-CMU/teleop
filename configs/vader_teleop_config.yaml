@@ -7,15 +7,17 @@ teleop_G: # "Right" arm
 teleop_C: # "Left" arm
   port: "/dev/serial/by-id/usb-FTDI_USB__-__Serial_Converter_FTA2U2O3-if00-port0"
   ids: [1,2,3,4,5,6,7]
-  joint_offsets: [4, -1, 3, 1, 7, 0, -2] # in multiples of np.pi/2
+  joint_offsets: [1, 2, 3, 1, 3, 2, 2]  # in multiples of np.pi/2
   gripper_config: [8, 190, 148]
 
 gripper:
   port: "/dev/serial/by-id/usb-FTDI_USB__-__Serial_Converter_FTA2U12T-if00-port0"
   arm_ip: "192.168.1.195"
+  reset_joints: [0, 0, 0, 90, 0, 0, 0, 0] #degrees. Assumed initial position of the arms
   ids: [1,2,4]
 
 cutter:
   port: "/dev/serial/by-id/usb-FTDI_USB__-__Serial_Converter_FT89I74E-if00-port0"
   arm_ip: "192.168.1.201"
+  reset_joints: [0, 0, 0, 90, 0, 0, 0, 0] #degrees. Assumed initial position of the arms
   id: 0

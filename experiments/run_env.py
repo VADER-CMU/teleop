@@ -82,9 +82,9 @@ def main(args):
 
         # System setup specific. This reset configuration works well on our setup. If you are mounting the robot
         # differently, you need a separate reset joint configuration.
-        reset_joints_left = np.deg2rad([0, 0, 0, 90, 0, 0, 0, 0])
-        reset_joints_right = np.deg2rad([0, 0, 0, 90, 0, 0, 0, 0])
-        reset_joints = np.concatenate([reset_joints_left, reset_joints_right])
+        reset_joints_cutter = np.deg2rad(config_reader.get_cutter_reset_joints())
+        reset_joints_gripper = np.deg2rad(config_reader.get_gripper_reset_joints())
+        reset_joints = np.concatenate([reset_joints_cutter, reset_joints_gripper])
         print(f"before observation")
         curr_joints = env.get_obs()["joint_positions"]
         print(f"got observation, curr_joints shape: {curr_joints.shape}")
@@ -105,9 +105,11 @@ def main(args):
                 "port": gello_port,
                 "start_joints": args.start_joints,
             }
+            config_reset_joints = (config_reader.get_cutter_reset_joints() if arm == "cutter"
+                                   else config_reader.get_gripper_reset_joints())
             if args.start_joints is None:
                 reset_joints = np.deg2rad(
-                    [0, 0, 0, 90, 0, 0, 0]
+                    config_reset_joints
                 )  # Change this to your own reset joints
             else:
                 reset_joints = np.array(args.start_joints)

@@ -104,7 +104,7 @@ class BimanualRobot(Robot):
     def command_joint_state(self, joint_state: np.ndarray) -> None:
         with self._command_lock:
             self._robot_l.command_joint_state(joint_state[: self._robot_l.num_dofs()])
-            time.sleep(0.01)
+            time.sleep(0.01) #TODO reduce as much as possible
             self._robot_r.command_joint_state(joint_state[self._robot_l.num_dofs() :])
 
     def get_observations(self) -> Dict[str, np.ndarray]:
