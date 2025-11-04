@@ -19,10 +19,29 @@ class VADERTeleopConfigReader:
                 raise KeyError(f"Missing key: {'.'.join(keys)}")
         return value
 
-    def get_teleop_port(self, arm: str) -> str:
-        """arm should be 'G' or 'C'."""
-        key = f"teleop_{arm}"
-        return self._get(self.config, key, "port")
+    def get_teleop_gripper_port(self) -> str:
+        return self._get(self.config, "teleop_G", "port")
+    
+    def get_teleop_gripper_ids(self) -> list:
+        return self._get(self.config, "teleop_G", "ids")
+    
+    def get_teleop_gripper_offsets(self) -> list:
+        return self._get(self.config, "teleop_G", "joint_offsets")
+    
+    def get_teleop_gripper_config(self) -> list:
+        return self._get(self.config, "teleop_G", "gripper_config")
+    
+    def get_teleop_cutter_port(self) -> str:
+        return self._get(self.config, "teleop_C", "port")
+    
+    def get_teleop_cutter_ids(self) -> list:
+        return self._get(self.config, "teleop_C", "ids")
+    
+    def get_teleop_cutter_offsets(self) -> list:
+        return self._get(self.config, "teleop_C", "joint_offsets")
+    
+    def get_teleop_cutter_config(self) -> list:
+        return self._get(self.config, "teleop_C", "gripper_config")
 
     def get_gripper_port(self) -> str:
         return self._get(self.config, "gripper", "port")
@@ -44,8 +63,14 @@ class VADERTeleopConfigReader:
 
 if __name__ == "__main__":
     reader = VADERTeleopConfigReader()
-    print("Teleop G Port:", reader.get_teleop_port("G"))
-    print("Teleop C Port:", reader.get_teleop_port("C"))
+    print("Teleop G Port:", reader.get_teleop_gripper_port())
+    print("Teleop C Port:", reader.get_teleop_cutter_port())
+    print("Teleop G IDs:", reader.get_teleop_gripper_ids())
+    print("Teleop C IDs:", reader.get_teleop_cutter_ids())
+    print("Teleop G Offsets:", reader.get_teleop_gripper_offsets())
+    print("Teleop C Offsets:", reader.get_teleop_cutter_offsets())
+    print("Teleop G Gripper Config:", reader.get_teleop_gripper_config())
+    print("Teleop C Gripper Config:", reader.get_teleop_cutter_config())
     print("Gripper Port:", reader.get_gripper_port())
     print("Gripper Arm IP:", reader.get_gripper_arm_ip())
     print("Gripper IDs:", reader.get_gripper_ids())

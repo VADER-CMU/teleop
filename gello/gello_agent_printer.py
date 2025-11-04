@@ -8,6 +8,10 @@ from gello.vader_teleop_config_reader import VADERTeleopConfigReader
 from gello.agents.agent import Agent
 from gello.robots.dynamixel import DynamixelRobot
 
+from serial.serialutil import SerialException
+
+np.set_printoptions(suppress=True, precision=3)
+
 # Set your serial port here
 
 @dataclass
@@ -32,7 +36,7 @@ class DynamixelRobotConfig:
         assert len(self.joint_ids) == len(self.joint_signs)
 
     def make_robot(
-        self, port: str = "/dev/ttyUSB2", start_joints: Optional[np.ndarray] = None
+        self, port: str, start_joints: Optional[np.ndarray] = None
     ) -> DynamixelRobot:
         return DynamixelRobot(
             joint_ids=self.joint_ids,
@@ -44,112 +48,61 @@ class DynamixelRobotConfig:
             start_joints=start_joints,
         )
 
+config_reader = VADERTeleopConfigReader()
 
-PORT_CONFIG_MAP: Dict[str, DynamixelRobotConfig] = {
-    # xArm
-    "/dev/serial/by-id/usb-FTDI_USB__-__Serial_Converter_FTA2U2O3-if00-port0": DynamixelRobotConfig(
-        joint_ids=(1, 2, 3, 4, 5, 6, 7),
-        joint_offsets=(
-            4 * np.pi / 2,
-            -1 * np.pi / 2,
-            3 * np.pi / 2,
-            1 * np.pi / 2,
-            7 * np.pi / 2,
-            0 * np.pi / 2,
-            -2 * np.pi / 2,
-        ),
-        joint_signs=(1, 1, 1, 1, 1, 1, 1),
-        gripper_config=(8, 190, 148),
+PORT_TELEOP_G = config_reader.get_teleop_gripper_port()
+PORT_TELEOP_C = config_reader.get_teleop_cutter_port()
+
+robot_G_config = DynamixelRobotConfig(
+    joint_ids=tuple(config_reader.get_teleop_gripper_ids()),
+    joint_offsets=tuple(
+        offset * (np.pi / 2) for offset in config_reader.get_teleop_gripper_offsets()
     ),
+    joint_signs=(1, 1, 1, 1, 1, 1, 1),  # assuming all joints have positive sign
+    gripper_config=tuple(config_reader.get_teleop_gripper_config()),
+)
+try:    
+    teleop_G_robot = robot_G_config.make_robot(port=PORT_TELEOP_G)
+except SerialException as e:
+    print(f"Failed to connect to teleop G robot on port {PORT_TELEOP_G}: {e}")
+    teleop_G_robot = None
+except RuntimeError as e:
+    print(f"Runtime error while connecting to teleop G robot on port {PORT_TELEOP_G}: {e}")
+    print("Are the teleop motors connected properly?")
+    teleop_G_robot = None
 
-    # xArm
-    "/dev/serial/by-id/usb-FTDI_USB__-__Serial_Converter_FT88YYGL-if00-port0": DynamixelRobotConfig(
-        joint_ids=(1, 2, 3, 4, 5, 6, 7),
-        joint_offsets=(
-            3 * np.pi / 2,
-            2 * np.pi / 2,
-            0 * np.pi / 2,
-            1 * np.pi / 2,
-            1 * np.pi / 2,
-            3 * np.pi / 2,
-            0 * np.pi / 2,
-        ),
-        joint_signs=(1, 1, 1, 1, 1, 1, 1),
-        gripper_config=(8, 192, 150),
+robot_C_config = DynamixelRobotConfig(
+    joint_ids=tuple(config_reader.get_teleop_cutter_ids()),
+    joint_offsets=tuple(
+        offset * (np.pi / 2) for offset in config_reader.get_teleop_cutter_offsets()
     ),
-    # yam
-    "/dev/serial/by-id/usb-FTDI_USB__-__Serial_Converter_FTA2U4GA-if00-port0": DynamixelRobotConfig(
-        joint_ids=(1, 2, 3, 4, 5, 6),
-        joint_offsets=[
-            0 * np.pi,
-            2 * np.pi / 2,
-            4 * np.pi / 2,
-            6 * np.pi / 6,
-            5 * np.pi / 3,
-            2 * np.pi / 2,
-        ],
-        joint_signs=(1, -1, -1, -1, 1, 1),
-        gripper_config=(
-            7,
-            -30,
-            24,
-        ),  # Reversed: now starts open (-30) and closes on press (24)
-    ),
-    # Left UR
-    "/dev/serial/by-id/usb-FTDI_USB__-__Serial_Converter_FT7WBEIA-if00-port0": DynamixelRobotConfig(
-        joint_ids=(1, 2, 3, 4, 5, 6),
-        joint_offsets=(
-            0,
-            1 * np.pi / 2 + np.pi,
-            np.pi / 2 + 0 * np.pi,
-            0 * np.pi + np.pi / 2,
-            np.pi - 2 * np.pi / 2,
-            -1 * np.pi / 2 + 2 * np.pi,
-        ),
-        joint_signs=(1, 1, -1, 1, 1, 1),
-        gripper_config=(7, 20, -22),
-    ),
-    # Right UR
-    "/dev/serial/by-id/usb-FTDI_USB__-__Serial_Converter_FT7WBG6A-if00-port0": DynamixelRobotConfig(
-        joint_ids=(1, 2, 3, 4, 5, 6),
-        joint_offsets=(
-            np.pi + 0 * np.pi,
-            2 * np.pi + np.pi / 2,
-            2 * np.pi + np.pi / 2,
-            2 * np.pi + np.pi / 2,
-            1 * np.pi,
-            3 * np.pi / 2,
-        ),
-        joint_signs=(1, 1, -1, 1, 1, 1),
-        gripper_config=(7, 286, 248),
-    ),
-}
+    joint_signs=(1, 1, 1, 1, 1, 1, 1),  # assuming all joints have positive sign
+    gripper_config=tuple(config_reader.get_teleop_cutter_config()),
+)
+try:    
+    teleop_C_robot = robot_C_config.make_robot(port=PORT_TELEOP_C)
+except SerialException as e:
+    print(f"Failed to connect to teleop C robot on port {PORT_TELEOP_C}: {e}")
+    teleop_C_robot = None
+except RuntimeError as e:
+    print(f"Runtime error while connecting to teleop C robot on port {PORT_TELEOP_C}: {e}")
+    print("Are the teleop motors connected properly?")
+    teleop_C_robot = None
 
-reader = VADERTeleopConfigReader()
-print("Teleop G Port:", reader.get_teleop_port("G"))
-print("Teleop C Port:", reader.get_teleop_port("C"))
-print("Gripper Port:", reader.get_gripper_port())
-print("Gripper Arm IP:", reader.get_gripper_arm_ip())
-print("Gripper IDs:", reader.get_gripper_ids())
-print("Cutter Port:", reader.get_cutter_port())
-print("Cutter Arm IP:", reader.get_cutter_arm_ip())
-print("Cutter ID:", reader.get_cutter_id())
 
-PORT = "/dev/serial/by-id/usb-FTDI_USB__-__Serial_Converter_FTA2U2O3-if00-port0"  # example
-
-if PORT not in PORT_CONFIG_MAP:
-    raise ValueError(f"Port {PORT} not in configuration map.")
-
-# Initialize robot using the config
-robot_config = PORT_CONFIG_MAP[PORT]
-robot = robot_config.make_robot(port=PORT)
-
+if teleop_G_robot is None and teleop_C_robot is None:
+    print("No teleop consoles connected. Exiting.")
+    exit(1)
 
 # Print joint values continuously
 try:
     while True:
-        joints = robot.get_joint_state()  # Should return np.ndarray
-        print("Joint values (radians):", np.round(joints, 3))
+        if teleop_G_robot:
+            joints = teleop_G_robot.get_joint_state()  # Should return np.ndarray
+            print("Teleop G Joint values (radians):", np.round(joints, 3))
+        if teleop_C_robot:
+            joints = teleop_C_robot.get_joint_state()  # Should return np.ndarray
+            print("Teleop C Joint values (radians):", np.round(joints, 3))
         time.sleep(0.5)
 
 except KeyboardInterrupt:
