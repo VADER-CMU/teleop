@@ -97,7 +97,7 @@ def main(args):
             time.sleep(0.001)
     else:
         if args.agent == "gello":
-            arm = "cutter"  # or "gripper"
+            arm = "gripper"  # or "gripper" "cutter"
             gello_port = (config_reader.get_teleop_cutter_port() if arm == "cutter"
                           else config_reader.get_teleop_gripper_port())
             agent_cfg = {

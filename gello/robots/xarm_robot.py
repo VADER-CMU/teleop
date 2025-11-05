@@ -209,7 +209,7 @@ class XArmRobotGripper(Robot):
     GRIPPER_OPEN = 0.0 
     GRIPPER_CLOSE = 1.0
     #  MAX_DELTA = 0.2
-    DEFAULT_MAX_DELTA = 0.05
+    DEFAULT_MAX_DELTA = 0.01 #0.05
 
     def num_dofs(self) -> int:
         return 8 

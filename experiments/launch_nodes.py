@@ -44,7 +44,8 @@ def launch_robot_server(args: Args):
     else:
         if args.robot == "xarm":
             from gello.robots.xarm_robot import XArmRobotGripper
-            robot = XArmRobotGripper(name="xarm_right", ip=args.xarm_cutter_ip, port_tool=args.port_cutter, ids_tool=args.ids_cutter, tool=1, ROS_control=False)
+            # robot = XArmRobotGripper(name="xarm_right", ip=args.xarm_cutter_ip, port_tool=args.port_cutter, ids_tool=args.ids_cutter, tool=1, ROS_control=False)
+            robot = XArmRobotGripper(name="xarm_right", ip=args.xarm_gripper_ip, port_tool=args.port_gripper, ids_tool=args.ids_gripper, tool=0, ROS_control=False)
 
         #added bimanual xarm option
         elif args.robot == "bimanual_xarm":

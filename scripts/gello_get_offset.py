@@ -16,7 +16,7 @@ MENAGERIE_ROOT: Path = Path(__file__).parent / "third_party" / "mujoco_menagerie
 
 @dataclass
 class Args:
-    port: str = "/dev/serial/by-id/usb-FTDI_USB__-__Serial_Converter_FTA2U2O3-if00-port0"
+    port: str = "/dev/serial/by-id/usb-FTDI_USB__-__Serial_Converter_FT88YYGL-if00-port0"
     """The port that GELLO is connected to."""
 
     start_joints: Tuple[float, ...] = (0, 0, 0, 0, 0, 0, 0)
