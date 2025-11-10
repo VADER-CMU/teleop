@@ -4,10 +4,10 @@ from pathlib import Path
 class VADERTeleopConfigReader:
     def __init__(self):
         base_path = Path(__file__).parent.resolve()
-        config_path: str = "../configs/vader_teleop_config.yaml"
-        config_path = base_path / config_path
-        print(config_path)
-        with open(config_path, 'r') as file:
+        self.config_path: str = "../configs/vader_teleop_config.yaml"
+        self.config_path = base_path / self.config_path
+        print(self.config_path)
+        with open(self.config_path, 'r') as file:
             self.config = yaml.safe_load(file)
 
     @staticmethod
@@ -18,6 +18,17 @@ class VADERTeleopConfigReader:
             if value is None:
                 raise KeyError(f"Missing key: {'.'.join(keys)}")
         return value
+    
+    def set_joint_offsets_gripper(self, offsets):
+        self.config['teleop_G']['joint_offsets'] = offsets
+        with open(self.config_path, 'w') as file:
+            yaml.dump(self.config, file)
+        
+
+    def set_joint_offsets_cutter(self, offsets):
+        self.config['teleop_C']['joint_offsets'] = offsets
+        with open(self.config_path, 'w') as file:
+            yaml.dump(self.config, file)
 
     def get_teleop_gripper_port(self) -> str:
         return self._get(self.config, "teleop_G", "port")
@@ -27,6 +38,9 @@ class VADERTeleopConfigReader:
     
     def get_teleop_gripper_offsets(self) -> list:
         return self._get(self.config, "teleop_G", "joint_offsets")
+
+    def get_teleop_gripper_signs(self) -> list:
+        return self._get(self.config, "teleop_G", "joint_signs")
     
     def get_teleop_gripper_config(self) -> list:
         return self._get(self.config, "teleop_G", "gripper_config")
@@ -39,6 +53,9 @@ class VADERTeleopConfigReader:
     
     def get_teleop_cutter_offsets(self) -> list:
         return self._get(self.config, "teleop_C", "joint_offsets")
+
+    def get_teleop_cutter_signs(self) -> list:
+        return self._get(self.config, "teleop_C", "joint_signs")
     
     def get_teleop_cutter_config(self) -> list:
         return self._get(self.config, "teleop_C", "gripper_config")

@@ -58,7 +58,7 @@ robot_G_config = DynamixelRobotConfig(
     joint_offsets=tuple(
         offset * (np.pi / 2) for offset in config_reader.get_teleop_gripper_offsets()
     ),
-    joint_signs=(1, 1, 1, 1, 1, 1, 1),  # assuming all joints have positive sign
+    joint_signs=tuple(config_reader.get_teleop_gripper_signs()),
     gripper_config=tuple(config_reader.get_teleop_gripper_config()),
 )
 try:    
@@ -76,7 +76,7 @@ robot_C_config = DynamixelRobotConfig(
     joint_offsets=tuple(
         offset * (np.pi / 2) for offset in config_reader.get_teleop_cutter_offsets()
     ),
-    joint_signs=(1, 1, 1, 1, 1, 1, 1),  # assuming all joints have positive sign
+    joint_signs=tuple(config_reader.get_teleop_cutter_signs()),  # assuming all joints have positive sign
     gripper_config=tuple(config_reader.get_teleop_cutter_config()),
 )
 try:    

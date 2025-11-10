@@ -143,7 +143,7 @@ class PepperGripper:
         #  pos is 0.0 for open gripper, 1.0 for closed gripper
         pos_cmd = np.array(self.gripper_open) + pos * (np.array(self.gripper_close) - np.array(self.gripper_open))
         # pos_cmd = [512, 512, 512]  # open position
-        print(f"pos_cmd: {pos_cmd}")
+        # print(f"pos_cmd: {pos_cmd}")
         # self._driver.set_joints(pos_cmd)
         try:
             self._driver.set_joints(pos_cmd)

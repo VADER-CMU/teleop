@@ -68,7 +68,7 @@ class GelloAgent(Agent):
                     joint_offsets=tuple(
                         offset * (np.pi / 2) for offset in config_reader.get_teleop_gripper_offsets()
                     ),
-                    joint_signs=(1, 1, 1, 1, 1, 1, 1),  # assuming all joints have positive sign
+                    joint_signs=tuple(config_reader.get_teleop_gripper_signs()),  # assuming all joints have positive sign
                     gripper_config=tuple(config_reader.get_teleop_gripper_config()),
                 )
                 self._robot = robot_G_config.make_robot(port=port, start_joints=start_joints)
@@ -79,7 +79,7 @@ class GelloAgent(Agent):
                     joint_offsets=tuple(
                         offset * (np.pi / 2) for offset in config_reader.get_teleop_cutter_offsets()
                     ),
-                    joint_signs=(1, 1, 1, 1, 1, 1, 1),  # assuming all joints have positive sign
+                    joint_signs=tuple(config_reader.get_teleop_cutter_signs()),  # assuming all joints have positive sign
                     gripper_config=tuple(config_reader.get_teleop_cutter_config()),
                 )
                 self._robot = robot_C_config.make_robot(port=port, start_joints=start_joints)
