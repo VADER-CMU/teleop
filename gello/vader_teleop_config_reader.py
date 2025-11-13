@@ -84,6 +84,9 @@ class VADERTeleopConfigReader:
     def get_cutter_reset_joints(self) -> list:
         return self._get(self.config, "cutter", "reset_joints")
 
+    def get_camera_serial(self) -> str:
+        return self._get(self.config, "camera", "serial")
+
 if __name__ == "__main__":
     reader = VADERTeleopConfigReader()
     print("Teleop G Port:", reader.get_teleop_gripper_port())
@@ -100,3 +103,4 @@ if __name__ == "__main__":
     print("Cutter Port:", reader.get_cutter_port())
     print("Cutter Arm IP:", reader.get_cutter_arm_ip())
     print("Cutter ID:", reader.get_cutter_id())
+    print("Camera Serial:", reader.get_camera_serial())

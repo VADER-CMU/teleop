@@ -87,3 +87,5 @@ teleop_G:
   - 1
   - 1
   port: /dev/serial/by-id/usb-FTDI_USB__-__Serial_Converter_FT88YYGL-if00-port0
+camera:
+  serial: 819112072363
