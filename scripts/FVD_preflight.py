@@ -9,14 +9,6 @@ from gello.dynamixel.driver import DynamixelDriver
 import pyrealsense2 as rs
 import time
 #!/usr/bin/env python3
-"""
-vader_teleop_preflight.py
-
-Ping 192.168.1.230 and print True if reachable, False otherwise.
-Exit code 0 for reachable, 1 for unreachable.
-"""
-
-TARGET_IP = "192.168.1.230"
 
 config_reader = VADERTeleopConfigReader()
 
@@ -63,13 +55,12 @@ def teleop_c_u2d2_connected() -> bool:
     teleop_c_port = config_reader.get_teleop_cutter_port()
     return _usb_device_exists(teleop_c_port)
 
-def realsense_connected() -> bool:
-    expected_serial = config_reader.get_camera_serial()
+def _realsense_connected(expected_serial: str) -> bool:
     try:
         ctx = rs.context()
         devices = ctx.query_devices()
         for dev in devices:
-            if dev.get_info(rs.camera_info.serial_number) == str(expected_serial):
+            if dev.get_info(rs.camera_info.serial_number) == expected_serial:
                 return True
         print(f"⚠️ Realsense device with serial {expected_serial} not found.")
         print("Connected Realsense devices:", end="")
@@ -80,6 +71,18 @@ def realsense_connected() -> bool:
     except Exception as e:
         print(f"⚠️ Error accessing Realsense devices: {e}")
         return False
+
+def teleop_realsense_connected() -> bool:
+    teleop_serial = config_reader.get_teleop_camera_serial()
+    return _realsense_connected(teleop_serial)
+
+def gripper_realsense_connected() -> bool:
+    gripper_serial = config_reader.get_gripper_camera_serial()
+    return _realsense_connected(gripper_serial)
+
+def cutter_realsense_connected() -> bool:
+    cutter_serial = config_reader.get_cutter_camera_serial()
+    return _realsense_connected(cutter_serial)
 
 def _xarm_operational(ip: str) -> bool:
     from xarm.wrapper import XArmAPI
@@ -144,8 +147,7 @@ def teleop_c_u2d2_operational() -> bool:
     teleop_c_ids = config_reader.get_teleop_cutter_ids()
     return _u2d2_operational(teleop_c_port, teleop_c_ids)
 
-def test_realsense_capture() -> bool:
-    expected_serial = config_reader.get_camera_serial()
+def _test_realsense_capture(expected_serial: str) -> bool:
     """
     Checks if a RealSense device is connected and functional by attempting to start
     a pipeline and retrieve frames.
@@ -158,7 +160,7 @@ def test_realsense_capture() -> bool:
     try:
         profile = pipeline.start(config)
         streamer = profile.get_stream(rs.stream.color)
-        for _ in range(3):
+        for _ in range(2):
             frames = pipeline.wait_for_frames()
             if not frames:
                 return False
@@ -179,10 +181,22 @@ def test_realsense_capture() -> bool:
             # This can happen if start() failed and pipeline was never truly started.
             pass
 
+def test_teleop_realsense_capture() -> bool:
+    teleop_serial = config_reader.get_teleop_camera_serial()
+    return _test_realsense_capture(teleop_serial)
+
+def test_gripper_realsense_capture() -> bool:
+    gripper_serial = config_reader.get_gripper_camera_serial()
+    return _test_realsense_capture(gripper_serial)
+
+def test_cutter_realsense_capture() -> bool:
+    cutter_serial = config_reader.get_cutter_camera_serial()
+    return _test_realsense_capture(cutter_serial)
+
 if __name__ == "__main__":
     # Test gripper first, then cutter and print results
 
-    print("=====Starting Teleoperation Preflight Checklist=====")
+    print("=====  Starting VADER FVD Preflight Checklist  =====")
 
     print("=====Checking Arms Control Boxes: Link Layer   =====")
 
@@ -207,13 +221,18 @@ if __name__ == "__main__":
         else:
             print(f"⚠️ {name} U2D2 not connected, check USB and power connection")
 
-    print("=====Checking Overhead Realsense Cam Link Layer=====")
+    print("=====Checking Realsense Cameras Link Layer     =====")
 
-    if realsense_connected():
-        print("✅ Overhead Realsense camera listed by pyrealsense2")
-    else:
-        print("⚠️ Overhead Realsense camera not connected, check USB and power connection")
+    devices = {"Teleop Cam": teleop_realsense_connected, "Gripper Cam": gripper_realsense_connected, "Cutter Cam": cutter_realsense_connected}
 
+
+    for name, check_fn in devices.items():
+        connected = check_fn()
+        if connected:
+            print(f"✅ {name} Realsense camera listed by pyrealsense2")
+        else:
+            print(f"⚠️ {name} Realsense camera not connected, check USB and power connection")
+    
     print()
 
     print("=====Checking Arms Control Boxes: Drivers      =====")
@@ -239,12 +258,17 @@ if __name__ == "__main__":
         if operational:
             print(f"✅ {name} U2D2 set torque mode operational")
         else:
-            print(f"⚠️ {name} U2D2 not operational, check connections and IDs")
+            print(f"⚠️ {name} U2D2 not operational, check power switch and E-stop.")
 
-    print("=====Checking Overhead Realsense Cam Driver   =====")
-    if test_realsense_capture():
-        print("✅ Overhead Realsense camera capture returns frames")
-    else:
-        print("⚠️ Overhead Realsense camera capture failed, check connection and camera status")
+    print("=====Checking Realsense Cam Drivers           =====")
 
-    print("=====Teleoperation Preflight Checklist Complete=====")
+    realsense_devices = {"Teleop Cam": test_teleop_realsense_capture, "Gripper Cam": test_gripper_realsense_capture, "Cutter Cam": test_cutter_realsense_capture}
+
+    for name, check_fn in realsense_devices.items():
+        capture = check_fn()
+        if capture:
+            print(f"✅ {name} Realsense camera capture returns frames")
+        else:
+            print(f"⚠️ {name} Realsense camera capture failed, check connection and camera status")
+
+    print("=====  VADER FVD Preflight Checklist Complete  =====")

@@ -88,4 +88,6 @@ teleop_G:
   - 1
   port: /dev/serial/by-id/usb-FTDI_USB__-__Serial_Converter_FT88YYGL-if00-port0
 camera:
-  serial: 819112072363
+  teleop_serial: "819112072363"
+  gripper_serial: "128422272240"
+  cutter_serial: "130322272760"
