@@ -209,7 +209,7 @@ class XArmRobotGripper(Robot):
     GRIPPER_OPEN = 0.0 
     GRIPPER_CLOSE = 1.0
     #  MAX_DELTA = 0.2
-    DEFAULT_MAX_DELTA = 0.01 #0.05
+    DEFAULT_MAX_DELTA = 0.01 #0.01 was the original val;ue
 
     def num_dofs(self) -> int:
         return 8 
@@ -244,7 +244,7 @@ class XArmRobotGripper(Robot):
         name: str = "xarm_right",
         ip: str = "192.168.1.226",
         real: bool = True,
-        control_frequency: float = 100.0,#50.0,
+        control_frequency: float = 100.0,#100.0 was the orig8inal value
         max_delta: float = DEFAULT_MAX_DELTA,
         port_tool: Optional[str] = None,
         ids_tool: Optional[list] = None,

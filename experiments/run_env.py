@@ -71,7 +71,7 @@ def main(args):
                     "_target_": "gello.agents.gello_agent.GelloAgent",
                     "port": cutter,
                 },
-                "agent_right": {
+                "agent_right": { 
                     "_target_": "gello.agents.gello_agent.GelloAgent",
                     "port": gripper,
                 },               
@@ -94,7 +94,7 @@ def main(args):
         for jnt in np.linspace(curr_joints, reset_joints, steps):
             print(f"inside bimanual reset loop, jnt: {jnt}")
             env.step(jnt)
-            time.sleep(0.001)
+            # time.sleep(0.001)
     else:
         if args.agent == "gello":
             arm = "gripper"  # or "gripper" "cutter"
@@ -175,7 +175,7 @@ def main(args):
         if max_joint_delta > max_delta:
             delta = delta / max_joint_delta * max_delta
         env.step(current_joints + delta)
-        time.sleep(0.01)  
+        # time.sleep(0.01)  
 
     obs = env.get_obs()
     joints = obs["joint_positions"]
