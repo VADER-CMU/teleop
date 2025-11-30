@@ -2,10 +2,13 @@ camera:
   cutter_serial: '130322272760'
   gripper_serial: '128422272240'
   teleop_serial: '819112072363'
-cutter:
+gripper: # left arm 
   arm_ip: 192.168.1.230
-  id: 0
-  port: /dev/serial/by-id/usb-FTDI_USB__-__Serial_Converter_FT89I74E-if00-port0
+  ids:
+  - 1
+  - 2
+  - 4
+  port: /dev/serial/by-id/usb-FTDI_USB__-__Serial_Converter_FTA2U12T-if00-port0
   reset_joints:
   - -109.3
   - -81.7
@@ -15,13 +18,16 @@ cutter:
   - 16
   - 174
   - 0
-gripper:
+fhrsense: # right arm
   arm_ip: 192.168.1.241
   ids:
   - 1
   - 2
+  - 3
   - 4
-  port: /dev/serial/by-id/usb-FTDI_USB__-__Serial_Converter_FTA2U12T-if00-port0
+  tool_ranges:
+  - [-0.5, -0.5, -0.5, -0.5]
+  port: /dev/serial/by-id/usb-FTDI_USB__-__Serial_Converter_FT89I74E-if00-port0
   reset_joints:
   - 118.7
   - -88

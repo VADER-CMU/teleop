@@ -12,14 +12,17 @@ from gello.vader_teleop_config_reader import VADERTeleopConfigReader
 
 config_reader = VADERTeleopConfigReader()
 
+
 @dataclass
 class Args:
-    xarm_gripper_ip: str = config_reader.get_gripper_arm_ip()
-    xarm_cutter_ip: str = config_reader.get_cutter_arm_ip()
+    xarm_right_ip: str = config_reader.get_right_arm_ip()
+    xarm_left_ip: str = config_reader.get_left_arm_ip()
     port_gripper: str = config_reader.get_gripper_port()
     ids_gripper: Sequence[int] = tuple(config_reader.get_gripper_ids())
-    port_cutter: str = config_reader.get_cutter_port()
-    ids_cutter: int = config_reader.get_cutter_id()
+    port_fhrsense: str = config_reader.get_fhrsense_port()
+    ids_fhrsense: int = config_reader.get_fhrsense_ids()
+    tool_ranges_fhrsense: Sequence[float] = tuple(
+        config_reader.get_fhrsense_tool_ranges())
     robot: str = "xarm"
     robot_port: int = 6001
     hostname: str = "127.0.0.1"
@@ -45,24 +48,27 @@ def launch_robot_server(args: Args):
         if args.robot == "xarm":
             from gello.robots.xarm_robot import XArmRobotGripper
             # robot = XArmRobotGripper(name="xarm_right", ip=args.xarm_cutter_ip, port_tool=args.port_cutter, ids_tool=args.ids_cutter, tool=1, ROS_control=False)
-            robot = XArmRobotGripper(name="xarm_right", ip=args.xarm_gripper_ip, port_tool=args.port_gripper, ids_tool=args.ids_gripper, tool=0, ROS_control=False)
+            robot = XArmRobotGripper(name="xarm_right", ip=args.xarm_gripper_ip,
+                                     port_tool=args.port_gripper, ids_tool=args.ids_gripper, tool=0, ROS_control=False)
 
-        #added bimanual xarm option
+        # added bimanual xarm option
         elif args.robot == "bimanual_xarm":
             from gello.robots.xarm_robot import XArmRobotGripper
 
             print("init gripper at " + args.port_gripper)
             print("gripper ids " + str(args.ids_gripper))
 
-            print("init cutter at " + args.port_cutter)
-            print("gripper ids " + str(args.ids_cutter))
+            print("init fhrsense at " + args.port_fhrsense)
+            print("fhrsense ids " + str(args.ids_fhrsense))
             # if args.ros:
             #     import rospy
             #     rospy.init_node("robot_xarm")
 
-            robot_right = XArmRobotGripper(name="xarm_right", ip=args.xarm_gripper_ip, port_tool=args.port_gripper, ids_tool=args.ids_gripper, tool=0, ROS_control=False)
+            robot_right = XArmRobotGripper(name="xarm_right", ip=args.xarm_right_ip,
+                                           port_tool=args.port_fhrsense, ids_tool=args.ids_fhrsense, tool=1, ROS_control=False)
             print("initialized 1 arm")
-            robot_left = XArmRobotGripper(name="xarm_left", ip=args.xarm_cutter_ip, port_tool=args.port_cutter, ids_tool=args.ids_cutter, tool=1, ROS_control=False)
+            robot_left = XArmRobotGripper(name="xarm_left", ip=args.xarm_left_ip,
+                                          port_tool=args.port_gripper, ids_tool=args.ids_gripper, tool=0, ROS_control=False)
             print("initialized both arms")
             robot = BimanualRobot(robot_left, robot_right)
         elif args.robot == "none" or args.robot == "print":
@@ -84,7 +90,7 @@ def main(args):
     # args.port_gripper = config_reader.get_gripper_port()
     # args.ids_gripper = config_reader.get_gripper_ids()
     # args.port_cutter = config_reader.get_cutter_port()
-    # args.ids_cutter = config_reader.get_cutter_id() 
+    # args.ids_cutter = config_reader.get_cutter_id()
     launch_robot_server(args)
 
 

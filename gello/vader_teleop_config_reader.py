@@ -1,6 +1,7 @@
 import yaml
 from pathlib import Path
 
+
 class VADERTeleopConfigReader:
     def __init__(self):
         base_path = Path(__file__).parent.resolve()
@@ -18,12 +19,11 @@ class VADERTeleopConfigReader:
             if value is None:
                 raise KeyError(f"Missing key: {'.'.join(keys)}")
         return value
-    
+
     def set_joint_offsets_gripper(self, offsets):
         self.config['teleop_G']['joint_offsets'] = offsets
         with open(self.config_path, 'w') as file:
             yaml.dump(self.config, file)
-        
 
     def set_joint_offsets_cutter(self, offsets):
         self.config['teleop_C']['joint_offsets'] = offsets
@@ -32,31 +32,31 @@ class VADERTeleopConfigReader:
 
     def get_teleop_gripper_port(self) -> str:
         return self._get(self.config, "teleop_G", "port")
-    
+
     def get_teleop_gripper_ids(self) -> list:
         return self._get(self.config, "teleop_G", "ids")
-    
+
     def get_teleop_gripper_offsets(self) -> list:
         return self._get(self.config, "teleop_G", "joint_offsets")
 
     def get_teleop_gripper_signs(self) -> list:
         return self._get(self.config, "teleop_G", "joint_signs")
-    
+
     def get_teleop_gripper_config(self) -> list:
         return self._get(self.config, "teleop_G", "gripper_config")
-    
+
     def get_teleop_cutter_port(self) -> str:
         return self._get(self.config, "teleop_C", "port")
-    
+
     def get_teleop_cutter_ids(self) -> list:
         return self._get(self.config, "teleop_C", "ids")
-    
+
     def get_teleop_cutter_offsets(self) -> list:
         return self._get(self.config, "teleop_C", "joint_offsets")
 
     def get_teleop_cutter_signs(self) -> list:
         return self._get(self.config, "teleop_C", "joint_signs")
-    
+
     def get_teleop_cutter_config(self) -> list:
         return self._get(self.config, "teleop_C", "gripper_config")
 
@@ -75,12 +75,12 @@ class VADERTeleopConfigReader:
     def get_cutter_arm_ip(self) -> str:
         return self._get(self.config, "cutter", "arm_ip")
 
-    def get_cutter_id(self) -> int:
-        return self._get(self.config, "cutter", "id")
-    
+    def get_cutter_ids(self) -> list:
+        return self._get(self.config, "cutter", "ids")
+
     def get_gripper_reset_joints(self) -> list:
         return self._get(self.config, "gripper", "reset_joints")
-    
+
     def get_cutter_reset_joints(self) -> list:
         return self._get(self.config, "cutter", "reset_joints")
 
@@ -92,6 +92,7 @@ class VADERTeleopConfigReader:
 
     def get_cutter_camera_serial(self) -> str:
         return self._get(self.config, "camera", "cutter_serial")
+
 
 if __name__ == "__main__":
     reader = VADERTeleopConfigReader()

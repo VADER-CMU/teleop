@@ -56,7 +56,7 @@ class RobotState:
     x: float
     y: float
     z: float
-    gripper: float #changes comment out
+    gripper: float  # changes comment out
     j1: float
     j2: float
     j3: float
@@ -77,7 +77,7 @@ class RobotState:
             cartesian[0],
             cartesian[1],
             cartesian[2],
-            gripper, #changes comment out
+            gripper,  # changes comment out
             joints[0],
             joints[1],
             joints[2],
@@ -97,7 +97,7 @@ class RobotState:
     def joints(self) -> np.ndarray:
         return np.array([self.j1, self.j2, self.j3, self.j4, self.j5, self.j6, self.j7])
 
-    def gripper_pos(self) -> float: #Changes comment out
+    def gripper_pos(self) -> float:  # Changes comment out
         return self.gripper
 
 
@@ -117,23 +117,23 @@ class Rate:
             time.sleep(remaining)
         self.last = time.time()
 
-class PepperGripper:
-    def __init__(self, joint_ids, port_tool, baudrate: int = 57600):
+
+class FHRSenseMain:
+    def __init__(self, joint_ids, port_tool, tool_ranges, baudrate: int = 57600):
         self.port_tool = port_tool
+        self.tool_ranges = tool_ranges
         # connect to dynamixel
         if self.port_tool is not None:
-            self._driver = DynamixelDriver(joint_ids, port=port_tool, baudrate=baudrate)
+            self._driver = DynamixelDriver(
+                joint_ids, port=port_tool, baudrate=baudrate)
             self._driver.set_torque_mode(True)
         self._torque_on = True
         # TODO get min max values here
         self.init_pos = self._driver.get_joints()
-        # self.gripper_open = self.init_pos
-        self.gripper_open = [30 * (np.pi/180), 30 * (np.pi/180), 30 * (np.pi/180)]
-        # self.gripper_close = np.copy(self.init_pos)
-        # self.gripper_close[0] += 0.8 * np.pi
-        # self.gripper_close[1] += 0.8 * np.pi
-        # self.gripper_close[2] += 0.8 * np.pi
-        self.gripper_close = [240 * (np.pi/180), 240 * (np.pi/180), 270 * (np.pi/180)]
+        self.gripper_open = self.init_pos
+        self.gripper_close = np.copy(self.init_pos)
+        for el in range(self.init_pos.shape[0]):
+            self.gripper_close[el] += self.tool_ranges[el]
 
     def set_gripper_position(self, pos: float, wait: bool = False) -> None:
         if self.port_tool is None:
@@ -141,7 +141,8 @@ class PepperGripper:
         # clip pos to be between 0 and 1
         pos = np.clip(pos, 0.0, 1.0)
         #  pos is 0.0 for open gripper, 1.0 for closed gripper
-        pos_cmd = np.array(self.gripper_open) + pos * (np.array(self.gripper_close) - np.array(self.gripper_open))
+        pos_cmd = np.array(self.gripper_open) + pos * \
+            (np.array(self.gripper_close) - np.array(self.gripper_open))
         # pos_cmd = [512, 512, 512]  # open position
         # print(f"pos_cmd: {pos_cmd}")
         # self._driver.set_joints(pos_cmd)
@@ -166,31 +167,44 @@ class PepperGripper:
         return (self._driver.get_joints()[0] - self.gripper_open[0]) / (self.gripper_close[0] - self.gripper_open[0])
 
 
-class PepperCutter:
+class PepperGripper:
     def __init__(self, joint_ids, port_tool, baudrate: int = 57600):
         self.port_tool = port_tool
         # connect to dynamixel
         if self.port_tool is not None:
-            self._driver = DynamixelDriver([joint_ids], port=port_tool, baudrate=baudrate)
+            self._driver = DynamixelDriver(
+                joint_ids, port=port_tool, baudrate=baudrate)
             self._driver.set_torque_mode(True)
         self._torque_on = True
         # TODO get min max values here
         self.init_pos = self._driver.get_joints()
-        self.gripper_open = np.array([205.05]) * np.pi / 180 # self.init_pos
-        self.gripper_close = np.array([342.77]) * np.pi / 180 #np.copy(self.init_pos)
-        self.gripper_close += 110.0 / 180.0 * np.pi
-        # print("Peppercutter: gripper open pos:", self.gripper_open)
-        # print("Peppercutter: gripper close pos:", self.gripper_close)
+        # self.gripper_open = self.init_pos
+        self.gripper_open = [
+            30 * (np.pi/180), 30 * (np.pi/180), 30 * (np.pi/180)]
+        # self.gripper_close = np.copy(self.init_pos)
+        # self.gripper_close[0] += 0.8 * np.pi
+        # self.gripper_close[1] += 0.8 * np.pi
+        # self.gripper_close[2] += 0.8 * np.pi
+        self.gripper_close = [
+            240 * (np.pi/180), 240 * (np.pi/180), 270 * (np.pi/180)]
 
     def set_gripper_position(self, pos: float, wait: bool = False) -> None:
         if self.port_tool is None:
             return
         # clip pos to be between 0 and 1
-        # print(f"Setting cutter position to {pos} clipped between 0 and 1")
         pos = np.clip(pos, 0.0, 1.0)
         #  pos is 0.0 for open gripper, 1.0 for closed gripper
-        pos_cmd = np.array(self.gripper_open) + pos * (np.array(self.gripper_close) - np.array(self.gripper_open))
-        self._driver.set_joints(pos_cmd)
+        pos_cmd = np.array(self.gripper_open) + pos * \
+            (np.array(self.gripper_close) - np.array(self.gripper_open))
+        # pos_cmd = [512, 512, 512]  # open position
+        # print(f"pos_cmd: {pos_cmd}")
+        # self._driver.set_joints(pos_cmd)
+        try:
+            self._driver.set_joints(pos_cmd)
+        except Exception as e:
+            print(f"SyncWrite failed for motors with positions {pos_cmd}")
+            print(f"Error details: {str(e)}")
+            raise
 
     def set_torque_mode(self, mode: bool):
         if mode == self._torque_on:
@@ -204,20 +218,21 @@ class PepperCutter:
     def get_position(self):
         # return normalized position
         return (self._driver.get_joints()[0] - self.gripper_open[0]) / (self.gripper_close[0] - self.gripper_open[0])
-    
+
+
 class XArmRobotGripper(Robot):
-    GRIPPER_OPEN = 0.0 
+    GRIPPER_OPEN = 0.0
     GRIPPER_CLOSE = 1.0
     #  MAX_DELTA = 0.2
-    DEFAULT_MAX_DELTA = 0.01 #0.01 was the original val;ue
+    DEFAULT_MAX_DELTA = 0.01  # 0.01 was the original val;ue
 
     def num_dofs(self) -> int:
-        return 8 
+        return 8
 
     def get_joint_state(self) -> np.ndarray:
         state = self.get_state()
-        gripper = state.gripper_pos() 
-        all_dofs = np.concatenate([state.joints(), np.array([gripper])])  
+        gripper = state.gripper_pos()
+        all_dofs = np.concatenate([state.joints(), np.array([gripper])])
         return all_dofs
 
     def command_joint_state(self, joint_state: np.ndarray) -> None:
@@ -238,17 +253,17 @@ class XArmRobotGripper(Robot):
         if self.command_thread is not None:
             self.command_thread.join()
 
-
     def __init__(
         self,
         name: str = "xarm_right",
         ip: str = "192.168.1.226",
         real: bool = True,
-        control_frequency: float = 100.0,#100.0 was the orig8inal value
+        control_frequency: float = 100.0,  # 100.0 was the orig8inal value
         max_delta: float = DEFAULT_MAX_DELTA,
         port_tool: Optional[str] = None,
         ids_tool: Optional[list] = None,
         tool: int = 0,  # 0 for gripper, 1 for cutter
+        tool_ranges: Optional[list] = None,
         ROS_control: bool = False,
     ):
         print(ip)
@@ -260,15 +275,14 @@ class XArmRobotGripper(Robot):
             self.robot = XArmAPI(ip, is_radian=True)
             if tool == 0:
                 self.gripper = PepperGripper(ids_tool, port_tool)
-                self._set_gripper_position(self.GRIPPER_OPEN) #check if self.GRIPPER_OPEN is
+                # check if self.GRIPPER_OPEN is
+                self._set_gripper_position(self.GRIPPER_OPEN)
             elif tool == 1:
-                self.gripper = PepperCutter(ids_tool, port_tool)
+                self.gripper = FHRSenseMain(ids_tool, port_tool, tool_ranges)
                 self._set_gripper_position(self.GRIPPER_OPEN)
         else:
             self.robot = None
         self._control_frequency = control_frequency
-        
-
 
         if real and self.robot is not None:
             print(f"Initializing robot at {ip}...")
@@ -276,38 +290,40 @@ class XArmRobotGripper(Robot):
             time.sleep(0.5)
             self.robot.clean_warn()
             time.sleep(0.5)
-            
+
             self.robot.motion_enable(True)
             time.sleep(0.5)
-            
+
             self.robot.set_mode(1)  # Servo motion mode
             time.sleep(0.5)
-            
+
             self.robot.set_state(state=0)  # Ready state
             time.sleep(1)  # Wait longer for ready state
-            
+
             # Verify robot is ready before setting collision sensitivity
             code, state = self.robot.get_state()
             print(f"Robot state: code={code}, state={state}")
-            
+
             if state == 0:
                 # Set collision sensitivity only when ready
                 ret = self.robot.set_collision_sensitivity(0)
                 time.sleep(0.5)
-                
+
                 if ret == 0:
                     print(f"✓ Collision detection DISABLED for {ip}")
                 else:
-                    print(f"⚠ Failed to disable collision (code={ret}), trying level 5...")
+                    print(
+                        f"⚠ Failed to disable collision (code={ret}), trying level 5...")
                     ret = self.robot.set_collision_sensitivity(5)
                     if ret == 0:
-                        print(f"✓ Collision sensitivity set to 5 (least sensitive) for {ip}")
+                        print(
+                            f"✓ Collision sensitivity set to 5 (least sensitive) for {ip}")
                     else:
-                        print(f"⚠ WARNING: Could not set collision sensitivity for {ip}")
+                        print(
+                            f"⚠ WARNING: Could not set collision sensitivity for {ip}")
             else:
-                print(f"⚠ Cannot set collision sensitivity - robot state is {state}")
-
-
+                print(
+                    f"⚠ Cannot set collision sensitivity - robot state is {state}")
 
         self.last_state_lock = threading.Lock()
         self.target_command_lock = threading.Lock()
@@ -330,25 +346,25 @@ class XArmRobotGripper(Robot):
         with self.target_command_lock:
             self.target_command = {
                 "joints": joints,
-                "gripper": gripper, #changes comment out
+                "gripper": gripper,  # changes comment out
             }
 
     def _clear_error_states(self):
         if self.robot is None:
             return
-        
+
         self.robot.clean_error()
         time.sleep(0.5)
-        
+
         self.robot.clean_warn()
         time.sleep(0.3)
-        
+
         self.robot.motion_enable(True)
         time.sleep(0.5)
-        
+
         self.robot.set_mode(1)
         time.sleep(0.3)
-        
+
         self.robot.set_state(state=0)
         time.sleep(0.5)
         # self.robot.set_gripper_enable(True) #commented out for now to avoid issues with gripper
@@ -415,7 +431,7 @@ class XArmRobotGripper(Robot):
                 self.last_state.joints() + delta,
             )
 
-            if gripper_command is not None: 
+            if gripper_command is not None:
                 set_point = gripper_command
                 self._set_gripper_position(
                     self.GRIPPER_OPEN
@@ -433,7 +449,7 @@ class XArmRobotGripper(Robot):
                 print(
                     f"Low  Level Frequency - mean: {frequency:10.3f}, std: {np.std(frequency):10.3f}, min: {np.min(frequency):10.3f}, max: {np.max(frequency):10.3f}"
                 )
-                #Low  Level Frequency - mean:     24.311, std:      0.000, min:     24.311, max:     24.311
+                # Low  Level Frequency - mean:     24.311, std:      0.000, min:     24.311, max:     24.311
 
                 step_times = []
 
@@ -442,7 +458,7 @@ class XArmRobotGripper(Robot):
             if self.robot is None:
                 return RobotState(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, np.zeros(3))
 
-            gripper_pos = self._get_gripper_pos() 
+            gripper_pos = self._get_gripper_pos()
 
             code, servo_angle = self.robot.get_servo_angle(is_radian=True)
             while code != 0:
@@ -463,7 +479,7 @@ class XArmRobotGripper(Robot):
             return RobotState.from_robot(
                 cart_pos,
                 servo_angle,
-                gripper_pos, #changes comment out
+                gripper_pos,  # changes comment out
                 aa,
             )
 
@@ -481,11 +497,12 @@ class XArmRobotGripper(Robot):
 
         max_retries = 2
         for attempt in range(max_retries):
-            ret = self.robot.set_servo_angle_j(joints, wait=False, is_radian=True)
-            
+            ret = self.robot.set_servo_angle_j(
+                joints, wait=False, is_radian=True)
+
             if ret == 0:  # Success
                 return
-            
+
             # Error occurred
             if ret in [1, 9]:
                 if attempt < max_retries - 1:
@@ -495,8 +512,6 @@ class XArmRobotGripper(Robot):
                 else:
                     print(f"Command failed after {max_retries} attempts")
                     self._clear_error_states()
-        
-
 
     def get_observations(self) -> Dict[str, np.ndarray]:
         state = self.get_state()
