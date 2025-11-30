@@ -18,6 +18,19 @@ git clone https://github.com/wuphilipp/gello_software.git
 cd gello_software
 ```
 
+## Usage
+
+After everything is installed and ready, do the following:
+
+* Check connections using `scripts/FVD_preflight.py`.
+
+* Calibrate the teleoperation arms using `scripts/vader_get_offsets.py`.
+
+* In one terminal, run `python3 experiments/launch_nodes.py --robot bimanual_xarm`.
+
+* In another terminal, run `python3 experiments/run_env.py --agent gello --bimanual`. Once both programs are running, the teleoperation starts.
+
+
 ## Installation
 
 ### Option 1: Virtual Environment (Recommended)
