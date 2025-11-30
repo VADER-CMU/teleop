@@ -27,10 +27,10 @@ fhrsense: # right arm
   - 4
   port: /dev/serial/by-id/usb-FTDI_USB__-__Serial_Converter_FTA2U12T-if00-port0
   tool_ranges:
-  - -2.0
-  - -2.0 
-  - -2.0
-  - -2.0
+  - -8.0 #ids 1-4
+  - -7.0 
+  - -8.0
+  - -7.0
   baudrate: 2000000
   reset_joints:
   - 118.7

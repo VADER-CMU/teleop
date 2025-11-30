@@ -125,7 +125,7 @@ class FHRSenseMain:
         # connect to dynamixel
         if self.port_tool is not None:
             self._driver = DynamixelDriver(
-                joint_ids, port=port_tool, baudrate=baudrate)
+                joint_ids, port=port_tool, baudrate=baudrate, operating_mode=4)
             self._driver.set_torque_mode(True)
         self._torque_on = True
         # TODO get min max values here
@@ -235,7 +235,7 @@ class XArmRobotGripper(Robot):
     GRIPPER_OPEN = 0.0
     GRIPPER_CLOSE = 1.0
     #  MAX_DELTA = 0.2
-    DEFAULT_MAX_DELTA = 0.01  # 0.01 was the original val;ue
+    DEFAULT_MAX_DELTA = 0.01  # 0.01 was the original val;ue arm speed
 
     def num_dofs(self) -> int:
         return 8

@@ -35,6 +35,7 @@ LEN_PRESENT_VELOCITY = 4
 ADDR_OPERATING_MODE = 11
 CURRENT_CONTROL_MODE = 0
 POSITION_CONTROL_MODE = 3
+EXTENDED_POSITION_CONTROL_MODE = 4
 
 # Servo-specific mappings and limits
 TORQUE_TO_CURRENT_MAPPING = {
@@ -135,7 +136,7 @@ class FakeDynamixelDriver(DynamixelDriverProtocol):
         self.set_current(torques)
 
     def set_operating_mode(self, mode: int):
-        pass
+        self._operating_mode = mode
 
     def verify_operating_mode(self, expected_mode: int):
         pass
@@ -162,7 +163,7 @@ class FakeDynamixelDriver(DynamixelDriverProtocol):
 
 class DynamixelDriver(DynamixelDriverProtocol):
     def __init__(
-        self, ids: Sequence[int], port: str = "/dev/ttyUSB0", baudrate: int = 57600
+        self, ids: Sequence[int], port: str = "/dev/ttyUSB0", baudrate: int = 57600, operating_mode: int = POSITION_CONTROL_MODE
     ):
         """Initialize the DynamixelDriver class.
 
@@ -173,7 +174,7 @@ class DynamixelDriver(DynamixelDriverProtocol):
         """
         self._ids = ids
         self._joint_angles = None
-
+        self._operating_mode = operating_mode
         self._lock = Lock() 
 
         # Initialize the port handler, packet handler, and group sync read/write
@@ -208,10 +209,31 @@ class DynamixelDriver(DynamixelDriverProtocol):
 
         # Disable torque for each Dynamixel servo
         self._torque_enabled = False
+
+        # set operating mode
+        self.set_operating_mode(self._operating_mode)
+
         try:
             self.set_torque_mode(self._torque_enabled)
         except Exception as e:
             print(f"port: {port}, {e}")
+    
+    def set_operating_mode(self, mode: int):
+        with self._lock:
+            # disable torque before changing operating mode
+            if self._torque_enabled:
+                self.set_torque_mode(False)
+            for dxl_id in self._ids:
+                dxl_comm_result, dxl_error = self._packetHandler.write1ByteTxRx(
+                    self._portHandler, dxl_id, ADDR_OPERATING_MODE, mode
+                )
+                if dxl_comm_result != COMM_SUCCESS or dxl_error != 0:
+                    print("Result:", dxl_comm_result)
+                    print("Error: ", dxl_error)
+                    raise RuntimeError(
+                        f"Failed to set operating mode for Dynamixel with ID {dxl_id}"
+                    )
+            self._operating_mode = mode
 
     def set_joints(self, joint_angles: Sequence[float]):
         with self._lock:
@@ -225,9 +247,12 @@ class DynamixelDriver(DynamixelDriverProtocol):
             for dxl_id, angle in zip(self._ids, joint_angles):
                 # Convert the angle to the appropriate value for the servo
                 position_value = int(angle * 2048 / np.pi)
-
-                # Allocate goal position value into byte array
-                param_goal_position = position_value.to_bytes(4, byteorder='little')
+                mode = self._operating_mode
+                if mode == EXTENDED_POSITION_CONTROL_MODE:
+                    param_goal_position = position_value.to_bytes(4, byteorder='little', signed=True)
+                else:
+                    # Allocate goal position value into byte array
+                    param_goal_position = position_value.to_bytes(4, byteorder='little')
                 # param_goal_position = [
                 #     DXL_LOBYTE(DXL_LOWORD(position_value)),
                 #     DXL_HIBYTE(DXL_LOWORD(position_value)),
