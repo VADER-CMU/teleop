@@ -108,6 +108,7 @@ class BimanualRobot(Robot):
             self._robot_r.command_joint_state(joint_state[self._robot_l.num_dofs() :])
 
     def get_observations(self) -> Dict[str, np.ndarray]:
+        # print("Getting bimanual robot observations...")
         l_obs = self._robot_l.get_observations()
         r_obs = self._robot_r.get_observations()
         assert l_obs.keys() == r_obs.keys()

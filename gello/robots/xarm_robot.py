@@ -119,7 +119,7 @@ class Rate:
 
 
 class FHRSenseMain:
-    def __init__(self, joint_ids, port_tool, tool_ranges, baudrate: int = 57600):
+    def __init__(self, joint_ids, port_tool, tool_ranges, baudrate: int = 2000000):
         self.port_tool = port_tool
         self.tool_ranges = tool_ranges
         # connect to dynamixel
@@ -134,6 +134,8 @@ class FHRSenseMain:
         self.gripper_close = np.copy(self.init_pos)
         for el in range(self.init_pos.shape[0]):
             self.gripper_close[el] += self.tool_ranges[el]
+        print("FHRSense gripper open positions: " + str(self.gripper_open)
+              + ", close positions: " + str(self.gripper_close))
 
     def set_gripper_position(self, pos: float, wait: bool = False) -> None:
         if self.port_tool is None:
@@ -160,11 +162,19 @@ class FHRSenseMain:
         self._torque_on = mode
 
     def get_joints(self):
-        return self._driver.get_joints()
+        # remove last entry to amke compatible (has to be even dof number)
+        # print("Getting FHRSense gripper joint positions...")
+        positions = self._driver.get_joints()
+        # positions = positions[:len(positions)-1]    
+        return positions
 
     def get_position(self):
+        # print("Getting FHRSense gripper joint positions...")
         # return normalized position
-        return (self._driver.get_joints()[0] - self.gripper_open[0]) / (self.gripper_close[0] - self.gripper_open[0])
+        # fremove last entry to make compatible (has to be even dof number)
+        positions = (self._driver.get_joints()[0] - self.gripper_open[0]) / (self.gripper_close[0] - self.gripper_open[0])
+        # return positions[:len(positions)-1]
+        return positions
 
 
 class PepperGripper:
@@ -213,6 +223,7 @@ class PepperGripper:
         self._torque_on = mode
 
     def get_joints(self):
+        # print("Getting gripper joint positions...")
         return self._driver.get_joints()
 
     def get_position(self):
@@ -264,6 +275,7 @@ class XArmRobotGripper(Robot):
         ids_tool: Optional[list] = None,
         tool: int = 0,  # 0 for gripper, 1 for cutter
         tool_ranges: Optional[list] = None,
+        baudrate: int = 57600,
         ROS_control: bool = False,
     ):
         print(ip)
@@ -518,6 +530,7 @@ class XArmRobotGripper(Robot):
         pos_quat = np.concatenate([state.cartesian_pos(), state.quat()])
         joints = self.get_joint_state()
         gripper_position = self.gripper.get_joints()
+        # print("Gripper joint positions: " + str(gripper_position))
         return {
             "joint_positions": joints,  # rotational joint + gripper state
             "joint_velocities": joints,

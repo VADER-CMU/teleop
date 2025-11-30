@@ -1,5 +1,5 @@
 camera:
-  cutter_serial: '130322272760'
+  fhrsense_serial: '130322272760'
   gripper_serial: '128422272240'
   teleop_serial: '819112072363'
 gripper: # left arm 
@@ -8,7 +8,7 @@ gripper: # left arm
   - 1
   - 2
   - 4
-  port: /dev/serial/by-id/usb-FTDI_USB__-__Serial_Converter_FTA2U12T-if00-port0
+  port: /dev/serial/by-id/usb-FTDI_USB__-__Serial_Converter_FT89I74E-if00-port0
   reset_joints:
   - -109.3
   - -81.7
@@ -25,9 +25,13 @@ fhrsense: # right arm
   - 2
   - 3
   - 4
+  port: /dev/serial/by-id/usb-FTDI_USB__-__Serial_Converter_FTA2U12T-if00-port0
   tool_ranges:
-  - [-0.5, -0.5, -0.5, -0.5]
-  port: /dev/serial/by-id/usb-FTDI_USB__-__Serial_Converter_FT89I74E-if00-port0
+  - -2.0
+  - -2.0 
+  - -2.0
+  - -2.0
+  baudrate: 2000000
   reset_joints:
   - 118.7
   - -88
@@ -37,7 +41,7 @@ fhrsense: # right arm
   - 30
   - 99.4
   - 0
-teleop_C:
+teleop_left:
   gripper_config:
   - 8
   - 190
@@ -67,7 +71,7 @@ teleop_C:
   - 1
   - 1
   port: /dev/serial/by-id/usb-FTDI_USB__-__Serial_Converter_FTA2U2O3-if00-port0
-teleop_G:
+teleop_right:
   gripper_config:
   - 8
   - 192

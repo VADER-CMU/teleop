@@ -34,8 +34,14 @@ class BimanualAgent(Agent):
         right_obs = {}
         for key, val in obs.items():
             L = val.shape[0]
+            # if key is gripper gripper_position, there are 7 joints, 4 right and 3 left
             half_dim = L // 2
-            assert L == half_dim * 2, f"{key} must be even, something is wrong"
+            # print(f"key: {key}, L: {L}, half_dim: {half_dim}")
+            # print(f"val: {val}")
+            if key == "gripper_position":
+                half_dim = 3  # left gripper has 3 joints, right gripper has 4 joints
+            else:
+                assert L == half_dim * 2, f"{key} must be even, something is wrong"
             left_obs[key] = val[:half_dim]
             right_obs[key] = val[half_dim:]
         return np.concatenate(

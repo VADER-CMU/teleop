@@ -59,28 +59,28 @@ class GelloAgent(Agent):
         else:
             config_reader = VADERTeleopConfigReader()
 
-            PORT_TELEOP_G = config_reader.get_teleop_gripper_port()
-            PORT_TELEOP_C = config_reader.get_teleop_cutter_port()
+            PORT_TELEOP_G = config_reader.get_teleop_right_port()
+            PORT_TELEOP_C = config_reader.get_teleop_left_port()
 
             if port == PORT_TELEOP_G:
                 robot_G_config = DynamixelRobotConfig(
-                    joint_ids=tuple(config_reader.get_teleop_gripper_ids()),
+                    joint_ids=tuple(config_reader.get_teleop_right_ids()),
                     joint_offsets=tuple(
-                        offset * (np.pi / 2) for offset in config_reader.get_teleop_gripper_offsets()
+                        offset * (np.pi / 2) for offset in config_reader.get_teleop_right_offsets()
                     ),
-                    joint_signs=tuple(config_reader.get_teleop_gripper_signs()),  # assuming all joints have positive sign
-                    gripper_config=tuple(config_reader.get_teleop_gripper_config()),
+                    joint_signs=tuple(config_reader.get_teleop_right_signs()),  # assuming all joints have positive sign
+                    gripper_config=tuple(config_reader.get_teleop_right_config()),
                 )
                 self._robot = robot_G_config.make_robot(port=port, start_joints=start_joints)
 
             elif port == PORT_TELEOP_C:
                 robot_C_config = DynamixelRobotConfig(
-                    joint_ids=tuple(config_reader.get_teleop_cutter_ids()),
+                    joint_ids=tuple(config_reader.get_teleop_left_ids()),
                     joint_offsets=tuple(
-                        offset * (np.pi / 2) for offset in config_reader.get_teleop_cutter_offsets()
+                        offset * (np.pi / 2) for offset in config_reader.get_teleop_left_offsets()
                     ),
-                    joint_signs=tuple(config_reader.get_teleop_cutter_signs()),  # assuming all joints have positive sign
-                    gripper_config=tuple(config_reader.get_teleop_cutter_config()),
+                    joint_signs=tuple(config_reader.get_teleop_left_signs()),  # assuming all joints have positive sign
+                    gripper_config=tuple(config_reader.get_teleop_left_config()),
                 )
                 self._robot = robot_C_config.make_robot(port=port, start_joints=start_joints)
             else:

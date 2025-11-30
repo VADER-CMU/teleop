@@ -15,14 +15,15 @@ config_reader = VADERTeleopConfigReader()
 
 @dataclass
 class Args:
-    xarm_right_ip: str = config_reader.get_right_arm_ip()
-    xarm_left_ip: str = config_reader.get_left_arm_ip()
+    xarm_right_ip: str = config_reader.get_fhrsense_arm_ip()
+    xarm_left_ip: str = config_reader.get_gripper_arm_ip()
     port_gripper: str = config_reader.get_gripper_port()
     ids_gripper: Sequence[int] = tuple(config_reader.get_gripper_ids())
     port_fhrsense: str = config_reader.get_fhrsense_port()
-    ids_fhrsense: int = config_reader.get_fhrsense_ids()
+    ids_fhrsense: Sequence[int] = tuple(config_reader.get_fhrsense_ids())
     tool_ranges_fhrsense: Sequence[float] = tuple(
         config_reader.get_fhrsense_tool_ranges())
+    baud_rate_fhrsense: int = config_reader.get_fhrsense_baudrate()
     robot: str = "xarm"
     robot_port: int = 6001
     hostname: str = "127.0.0.1"
@@ -65,7 +66,10 @@ def launch_robot_server(args: Args):
             #     rospy.init_node("robot_xarm")
 
             robot_right = XArmRobotGripper(name="xarm_right", ip=args.xarm_right_ip,
-                                           port_tool=args.port_fhrsense, ids_tool=args.ids_fhrsense, tool=1, ROS_control=False)
+                                           port_tool=args.port_fhrsense, 
+                                           ids_tool=args.ids_fhrsense, tool=1, 
+                                           tool_ranges=args.tool_ranges_fhrsense, 
+                                           baudrate=args.baud_rate_fhrsense, ROS_control=False)
             print("initialized 1 arm")
             robot_left = XArmRobotGripper(name="xarm_left", ip=args.xarm_left_ip,
                                           port_tool=args.port_gripper, ids_tool=args.ids_gripper, tool=0, ROS_control=False)

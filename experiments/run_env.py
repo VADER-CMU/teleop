@@ -63,28 +63,28 @@ def main(args):
     if args.bimanual:
         if args.agent == "gello":
             # dynamixel control box port map (to distinguish cutter and gripper gello)
-            gripper = config_reader.get_teleop_gripper_port() #GRIPPER
-            cutter = config_reader.get_teleop_cutter_port() #CUTTER
+            right = config_reader.get_teleop_right_port() #GRIPPER
+            left = config_reader.get_teleop_left_port() #CUTTER
             agent_cfg = {
                 "_target_": "gello.agents.agent.BimanualAgent",
                 "agent_left": {
                     "_target_": "gello.agents.gello_agent.GelloAgent",
-                    "port": cutter,
+                    "port": left,
                 },
                 "agent_right": { 
                     "_target_": "gello.agents.gello_agent.GelloAgent",
-                    "port": gripper,
+                    "port": right,
                 },               
             }
-            print(f"inside bimanual gello, cutter port: {cutter}, gripper port: {gripper}")
+            print(f"inside bimanual gello, left port: {left}, right port: {right}")
         else:
             raise ValueError(f"Invalid agent name for bimanual: {args.agent}")
 
         # System setup specific. This reset configuration works well on our setup. If you are mounting the robot
         # differently, you need a separate reset joint configuration.
-        reset_joints_cutter = np.deg2rad(config_reader.get_cutter_reset_joints())
-        reset_joints_gripper = np.deg2rad(config_reader.get_gripper_reset_joints())
-        reset_joints = np.concatenate([reset_joints_cutter, reset_joints_gripper])
+        reset_joints_left= np.deg2rad(config_reader.get_gripper_reset_joints())
+        reset_joints_right = np.deg2rad(config_reader.get_fhrsense_reset_joints())
+        reset_joints = np.concatenate([reset_joints_left, reset_joints_right])
         print(f"before observation")
         curr_joints = env.get_obs()["joint_positions"]
         print(f"got observation, curr_joints shape: {curr_joints.shape}")
@@ -92,7 +92,7 @@ def main(args):
         steps = min(int(max_delta / 0.01), 100)
 
         for jnt in np.linspace(curr_joints, reset_joints, steps):
-            print(f"inside bimanual reset loop, jnt: {jnt}")
+            # print(f"inside bimanual reset loop, jnt: {jnt}")
             env.step(jnt)
             # time.sleep(0.001)
     else:

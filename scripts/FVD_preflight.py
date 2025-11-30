@@ -35,24 +35,24 @@ def gripper_arm_reachable() -> bool:
     gripper_ip = config_reader.get_gripper_arm_ip()
     return _ip_reachable(gripper_ip)
 
-def cutter_arm_reachable() -> bool:
-    cutter_ip = config_reader.get_cutter_arm_ip()
-    return _ip_reachable(cutter_ip)
+def fhrsense_arm_reachable() -> bool:
+    fhrsense_ip = config_reader.get_fhrsense_arm_ip()
+    return _ip_reachable(fhrsense_ip)
 
 def gripper_u2d2_connected() -> bool:
     gripper_port = config_reader.get_gripper_port()
     return _usb_device_exists(gripper_port)
 
-def cutter_u2d2_connected() -> bool:
-    cutter_port = config_reader.get_cutter_port()
-    return _usb_device_exists(cutter_port)
+def fhrsense_u2d2_connected() -> bool:
+    fhrsense_port = config_reader.get_fhrsense_port()
+    return _usb_device_exists(fhrsense_port)
 
 def teleop_g_u2d2_connected() -> bool:
     teleop_g_port = config_reader.get_teleop_gripper_port()
     return _usb_device_exists(teleop_g_port)
 
 def teleop_c_u2d2_connected() -> bool:
-    teleop_c_port = config_reader.get_teleop_cutter_port()
+    teleop_c_port = config_reader.get_teleop_fhrsense_port()
     return _usb_device_exists(teleop_c_port)
 
 def _realsense_connected(expected_serial: str) -> bool:
@@ -80,9 +80,9 @@ def gripper_realsense_connected() -> bool:
     gripper_serial = config_reader.get_gripper_camera_serial()
     return _realsense_connected(gripper_serial)
 
-def cutter_realsense_connected() -> bool:
-    cutter_serial = config_reader.get_cutter_camera_serial()
-    return _realsense_connected(cutter_serial)
+def fhrsense_realsense_connected() -> bool:
+    fhrsense_serial = config_reader.get_fhrsense_camera_serial()
+    return _realsense_connected(fhrsense_serial)
 
 def _xarm_operational(ip: str) -> bool:
     from xarm.wrapper import XArmAPI
@@ -114,9 +114,9 @@ def gripper_xarm_operational() -> bool:
     gripper_ip = config_reader.get_gripper_arm_ip()
     return _xarm_operational(gripper_ip)
 
-def cutter_xarm_operational() -> bool:
-    cutter_ip = config_reader.get_cutter_arm_ip()
-    return _xarm_operational(cutter_ip)
+def fhrsense_xarm_operational() -> bool:
+    fhrsense_ip = config_reader.get_fhrsense_arm_ip()
+    return _xarm_operational(fhrsense_ip)
 
 def _u2d2_operational(port: str, ids: list, baudrate = 57600) -> bool:
     try:
@@ -132,10 +132,10 @@ def gripper_u2d2_operational() -> bool:
     gripper_ids = config_reader.get_gripper_ids()
     return _u2d2_operational(gripper_port, gripper_ids)
 
-def cutter_u2d2_operational() -> bool:
-    cutter_port = config_reader.get_cutter_port()
-    cutter_id = config_reader.get_cutter_id()
-    return _u2d2_operational(cutter_port, [cutter_id])
+def fhrsense_u2d2_operational() -> bool:
+    fhrsense_port = config_reader.get_fhrsense_port()
+    fhrsense_ids = config_reader.get_fhrsense_ids()
+    return _u2d2_operational(fhrsense_port, [fhrsense_ids])
 
 def teleop_g_u2d2_operational() -> bool:
     teleop_g_port = config_reader.get_teleop_gripper_port()
@@ -143,8 +143,8 @@ def teleop_g_u2d2_operational() -> bool:
     return _u2d2_operational(teleop_g_port, teleop_g_ids)
 
 def teleop_c_u2d2_operational() -> bool:
-    teleop_c_port = config_reader.get_teleop_cutter_port()
-    teleop_c_ids = config_reader.get_teleop_cutter_ids()
+    teleop_c_port = config_reader.get_teleop_fhrsense_port()
+    teleop_c_ids = config_reader.get_teleop_fhrsense_ids()
     return _u2d2_operational(teleop_c_port, teleop_c_ids)
 
 def _test_realsense_capture(expected_serial: str) -> bool:
@@ -189,18 +189,18 @@ def test_gripper_realsense_capture() -> bool:
     gripper_serial = config_reader.get_gripper_camera_serial()
     return _test_realsense_capture(gripper_serial)
 
-def test_cutter_realsense_capture() -> bool:
-    cutter_serial = config_reader.get_cutter_camera_serial()
-    return _test_realsense_capture(cutter_serial)
+def test_fhrsense_realsense_capture() -> bool:
+    fhrsense_serial = config_reader.get_fhrsense_camera_serial()
+    return _test_realsense_capture(fhrsense_serial)
 
 if __name__ == "__main__":
-    # Test gripper first, then cutter and print results
+    # Test gripper first, then fhrsense and print results
 
     print("=====  Starting VADER FVD Preflight Checklist  =====")
 
     print("=====Checking Arms Control Boxes: Link Layer   =====")
 
-    ip_devices = {"Gripper": gripper_arm_reachable, "Cutter": cutter_arm_reachable}
+    ip_devices = {"Gripper": gripper_arm_reachable, "FHRSense": fhrsense_arm_reachable}
 
     for name, check_fn in ip_devices.items():
         reachable = check_fn()
@@ -211,8 +211,8 @@ if __name__ == "__main__":
 
     print("=====Checking Dynamixel U2D2 Bridges Link Layer=====")
 
-    devices = {"Gripper": gripper_u2d2_connected, "Cutter": cutter_u2d2_connected,
-               "Teleop Gripper": teleop_g_u2d2_connected, "Teleop Cutter": teleop_c_u2d2_connected}
+    devices = {"Gripper": gripper_u2d2_connected, "FHRSense": fhrsense_u2d2_connected,
+               "Teleop Gripper": teleop_g_u2d2_connected, "Teleop FHRSense": teleop_c_u2d2_connected}
 
     for name, check_fn in devices.items():
         connected = check_fn()
@@ -223,7 +223,7 @@ if __name__ == "__main__":
 
     print("=====Checking Realsense Cameras Link Layer     =====")
 
-    devices = {"Teleop Cam": teleop_realsense_connected, "Gripper Cam": gripper_realsense_connected, "Cutter Cam": cutter_realsense_connected}
+    devices = {"Teleop Cam": teleop_realsense_connected, "Gripper Cam": gripper_realsense_connected, "FHRSense Cam": fhrsense_realsense_connected}
 
 
     for name, check_fn in devices.items():
@@ -237,7 +237,7 @@ if __name__ == "__main__":
 
     print("=====Checking Arms Control Boxes: Drivers      =====")
 
-    xarm_devices = {"Gripper": gripper_xarm_operational, "Cutter": cutter_xarm_operational}
+    xarm_devices = {"Gripper": gripper_xarm_operational, "FHRSense": fhrsense_xarm_operational}
 
 
     for name, check_fn in xarm_devices.items():
@@ -250,8 +250,8 @@ if __name__ == "__main__":
     print("=====Checking Dynamixel U2D2 Bridges Drivers   =====")
 
 
-    u2d2_devices = {"Gripper": gripper_u2d2_operational, "Cutter": cutter_u2d2_operational,
-                    "Teleop Gripper": teleop_g_u2d2_operational, "Teleop Cutter": teleop_c_u2d2_operational}
+    u2d2_devices = {"Gripper": gripper_u2d2_operational, "FHRSense": fhrsense_u2d2_operational,
+                    "Teleop Gripper": teleop_g_u2d2_operational, "Teleop FHRSense": teleop_c_u2d2_operational}
     
     for name, check_fn in u2d2_devices.items():
         operational = check_fn()
@@ -262,7 +262,7 @@ if __name__ == "__main__":
 
     print("=====Checking Realsense Cam Drivers           =====")
 
-    realsense_devices = {"Teleop Cam": test_teleop_realsense_capture, "Gripper Cam": test_gripper_realsense_capture, "Cutter Cam": test_cutter_realsense_capture}
+    realsense_devices = {"Teleop Cam": test_teleop_realsense_capture, "Gripper Cam": test_gripper_realsense_capture, "FHRSense Cam": test_fhrsense_realsense_capture}
 
     for name, check_fn in realsense_devices.items():
         capture = check_fn()

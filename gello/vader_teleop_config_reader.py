@@ -21,44 +21,44 @@ class VADERTeleopConfigReader:
         return value
 
     def set_joint_offsets_gripper(self, offsets):
-        self.config['teleop_G']['joint_offsets'] = offsets
+        self.config['teleop_right']['joint_offsets'] = offsets
         with open(self.config_path, 'w') as file:
             yaml.dump(self.config, file)
 
-    def set_joint_offsets_cutter(self, offsets):
-        self.config['teleop_C']['joint_offsets'] = offsets
+    def set_joint_offsets_fhrsense(self, offsets):
+        self.config['teleop_left']['joint_offsets'] = offsets
         with open(self.config_path, 'w') as file:
             yaml.dump(self.config, file)
 
-    def get_teleop_gripper_port(self) -> str:
-        return self._get(self.config, "teleop_G", "port")
+    def get_teleop_right_port(self) -> str:
+        return self._get(self.config, "teleop_right", "port")
 
-    def get_teleop_gripper_ids(self) -> list:
-        return self._get(self.config, "teleop_G", "ids")
+    def get_teleop_right_ids(self) -> list:
+        return self._get(self.config, "teleop_right", "ids")
 
-    def get_teleop_gripper_offsets(self) -> list:
-        return self._get(self.config, "teleop_G", "joint_offsets")
+    def get_teleop_right_offsets(self) -> list:
+        return self._get(self.config, "teleop_right", "joint_offsets")
 
-    def get_teleop_gripper_signs(self) -> list:
-        return self._get(self.config, "teleop_G", "joint_signs")
+    def get_teleop_right_signs(self) -> list:
+        return self._get(self.config, "teleop_right", "joint_signs")
 
-    def get_teleop_gripper_config(self) -> list:
-        return self._get(self.config, "teleop_G", "gripper_config")
+    def get_teleop_right_config(self) -> list:
+        return self._get(self.config, "teleop_right", "gripper_config")
 
-    def get_teleop_cutter_port(self) -> str:
-        return self._get(self.config, "teleop_C", "port")
+    def get_teleop_left_port(self) -> str:
+        return self._get(self.config, "teleop_left", "port")
 
-    def get_teleop_cutter_ids(self) -> list:
-        return self._get(self.config, "teleop_C", "ids")
+    def get_teleop_left_ids(self) -> list:
+        return self._get(self.config, "teleop_left", "ids")
 
-    def get_teleop_cutter_offsets(self) -> list:
-        return self._get(self.config, "teleop_C", "joint_offsets")
+    def get_teleop_left_offsets(self) -> list:
+        return self._get(self.config, "teleop_left", "joint_offsets")
 
-    def get_teleop_cutter_signs(self) -> list:
-        return self._get(self.config, "teleop_C", "joint_signs")
+    def get_teleop_left_signs(self) -> list:
+        return self._get(self.config, "teleop_left", "joint_signs")
 
-    def get_teleop_cutter_config(self) -> list:
-        return self._get(self.config, "teleop_C", "gripper_config")
+    def get_teleop_left_config(self) -> list:
+        return self._get(self.config, "teleop_left", "gripper_config")
 
     def get_gripper_port(self) -> str:
         return self._get(self.config, "gripper", "port")
@@ -69,47 +69,53 @@ class VADERTeleopConfigReader:
     def get_gripper_ids(self) -> list:
         return self._get(self.config, "gripper", "ids")
 
-    def get_cutter_port(self) -> str:
-        return self._get(self.config, "cutter", "port")
+    def get_fhrsense_port(self) -> str:
+        return self._get(self.config, "fhrsense", "port")
 
-    def get_cutter_arm_ip(self) -> str:
-        return self._get(self.config, "cutter", "arm_ip")
+    def get_fhrsense_arm_ip(self) -> str:
+        return self._get(self.config, "fhrsense", "arm_ip")
 
-    def get_cutter_ids(self) -> list:
-        return self._get(self.config, "cutter", "ids")
+    def get_fhrsense_ids(self) -> list:
+        return self._get(self.config, "fhrsense", "ids")
+
+    def get_fhrsense_tool_ranges(self) -> list:
+        return self._get(self.config, "fhrsense", "tool_ranges")
+    
+    def get_fhrsense_baudrate(self) -> int:
+        return self._get(self.config, "fhrsense", "baudrate")
 
     def get_gripper_reset_joints(self) -> list:
         return self._get(self.config, "gripper", "reset_joints")
 
-    def get_cutter_reset_joints(self) -> list:
-        return self._get(self.config, "cutter", "reset_joints")
+    def get_fhrsense_reset_joints(self) -> list:
+        return self._get(self.config, "fhrsense", "reset_joints")
 
-    def get_teleop_camera_serial(self) -> str:
+    def get_teleop_leftamera_serial(self) -> str:
         return self._get(self.config, "camera", "teleop_serial")
 
     def get_gripper_camera_serial(self) -> str:
         return self._get(self.config, "camera", "gripper_serial")
 
-    def get_cutter_camera_serial(self) -> str:
-        return self._get(self.config, "camera", "cutter_serial")
+    def get_fhrsense_camera_serial(self) -> str:
+        return self._get(self.config, "camera", "fhrsense_serial")
 
 
 if __name__ == "__main__":
     reader = VADERTeleopConfigReader()
-    print("Teleop G Port:", reader.get_teleop_gripper_port())
-    print("Teleop C Port:", reader.get_teleop_cutter_port())
-    print("Teleop G IDs:", reader.get_teleop_gripper_ids())
-    print("Teleop C IDs:", reader.get_teleop_cutter_ids())
-    print("Teleop G Offsets:", reader.get_teleop_gripper_offsets())
-    print("Teleop C Offsets:", reader.get_teleop_cutter_offsets())
-    print("Teleop G Gripper Config:", reader.get_teleop_gripper_config())
-    print("Teleop C Gripper Config:", reader.get_teleop_cutter_config())
+    print("Teleop G Port:", reader.get_teleop_rightripper_port())
+    print("Teleop C Port:", reader.get_teleop_fhrsense_port())
+    print("Teleop G IDs:", reader.get_teleop_rightripper_ids())
+    print("Teleop C IDs:", reader.get_teleop_fhrsense_ids())
+    print("Teleop G Offsets:", reader.get_teleop_rightripper_offsets())
+    print("Teleop C Offsets:", reader.get_teleop_fhrsense_offsets())
+    print("Teleop G Gripper Config:", reader.get_teleop_rightripper_config())
+    print("Teleop C Gripper Config:", reader.get_teleop_fhrsense_config())
     print("Gripper Port:", reader.get_gripper_port())
     print("Gripper Arm IP:", reader.get_gripper_arm_ip())
     print("Gripper IDs:", reader.get_gripper_ids())
-    print("Cutter Port:", reader.get_cutter_port())
-    print("Cutter Arm IP:", reader.get_cutter_arm_ip())
-    print("Cutter ID:", reader.get_cutter_id())
-    print("Teleop Camera Serial:", reader.get_teleop_camera_serial())
+    print("FHRSense Port:", reader.get_fhrsense_port())
+    print("FHRSense Arm IP:", reader.get_fhrsense_arm_ip())
+    print("FHRSense ID:", reader.get_fhrsense_ids())
+    print("Teleop Camera Serial:", reader.get_teleop_left_camera_serial())
     print("Gripper Camera Serial:", reader.get_gripper_camera_serial())
-    print("Cutter Camera Serial:", reader.get_cutter_camera_serial())
+    print("FHRSense Camera Serial:", reader.get_fhrsense_camera_serial())
