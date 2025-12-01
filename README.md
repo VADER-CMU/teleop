@@ -30,6 +30,14 @@ After everything is installed and ready, do the following:
 
 * In another terminal, run `python3 experiments/run_env.py --agent gello --bimanual`. Once both programs are running, the teleoperation starts.
 
+To increase the control rate, it is necessary to reduce the latency timer of each Dynamixel U2D2 bridge. To do this, run the following (requires sudo privileges):
+
+```bash
+# Replace ttyUSB0 with each device (ttyUSB1, 2, ...)
+echo 1 | sudo tee /sys/bus/usb-serial/devices/ttyUSB0/latency_timer 
+```
+
+In our experience, this improved the control loop rate from 15Hz to 42Hz on average, and resulted in much smoother control. Thanks to Cornelia Bauer from FutureHand for this tip.
 
 ## Installation
 
